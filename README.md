@@ -2,9 +2,9 @@
 ## Gembloux Agro-Bio Tech
 This repository is related to the internship and writing of the thesis LM-60 R - NATURAL SCIENCES.
 
-## Use language
-### [Dendrochronomics](https://dendrochronomics.ugent.be/#software)
-Tree-ring research revisited.
+
+## [Dendrochronomics](https://dendrochronomics.ugent.be/#software)
+### Use language
 + MATLAB Runtime (R2024b)
 + CoreProcessor
 + RingIndicator
