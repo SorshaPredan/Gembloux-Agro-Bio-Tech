@@ -72,7 +72,7 @@ plot( years_HealthyBAI, mean_HealthyBAI, type="l", col="blue", lwd=2, xlab="Year
      legend( "topright", legend=c("Beech No Malade", "Beech Malade"), col=c("blue","red"), lwd=2 )
 ### Differenza di crescita tra i gruppi
 difference_BAI <- mean_HealthyBAI - mean_DiseasedBAI 
-plot( years, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )
+plot( years_HealthyBAI, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )
 
 # RWI (Ring Width Index)
 ## la crescita risponde diversamente a temperatura e precipitazioni?
