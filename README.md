@@ -1,6 +1,6 @@
 # University of Liege 
 ## Gembloux Agro-Bio Tech
-This repository is related to the internship and writing of the thesis LM-60 R - NATURAL SCIENCES.
+This repository is related to the internship and writing of the thesis LM-60 NATURAL SCIENCES.
 
 
 ## [Dendrochronomics](https://dendrochronomics.ugent.be/#software)
