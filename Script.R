@@ -41,15 +41,46 @@ BeechTRW<- read_xlsx("TRWBeech.xlsx")
 BeechTRW[1]<-NULL
 row.names(BeechTRW)<-1819:2025
 rwi.stats(BeechTRW)
-BeechBAI<-bai.in(BeechTRW)
+
+# BAI (Basal Area Increment = incrementO dell’area basale)
+## gli alberi malati crescono meno?
+BeechBAI<-bai.in(BeechTRW)     # Basal Area Increment = incrementdell’area basale
 # rwi.stats(BirchTRW)
-rwi.stats.running(BeechTRW)
-corr.rwl.seg(BeechTRW)
-## PC Gembloux
+rwi.stats.running(BeechTRW)    # analizza come cambiano le statistiche della crescita nel tempo.
+corr.rwl.seg(BeechTRW)         # controlla quanto gli alberi sono correlati tra loro
+
+# BAI Becch Malade/No Malade
+## gli alberi malati presentano una crescita inferiore rispetto agli alberi sani?
+HealthyTRW <- read_xlsx("TRWBeechNoMalade.xlsx") 
+HealthyTRW <- as.data.frame(HealthyTRW)
+DiseasedTRW <- read_xlsx("TRWBeechMalade.xlsx")
+DiseasedTRW <- as.data.frame(DiseasedTRW)
+HealthyTRW[1] <- NULL
+DiseasedTRW[1] <- NULL
+row.names(HealthyTRW)<-1819:2025
+row.names(DiseasedTRW)<-1819:2025
+HealthyBAI <- bai.in(HealthyTRW)
+years_HealthyBAI <- as.numeric(row.names(HealthyBAI))
+DiseasedBAI <- bai.in(DiseasedTRW)
+years_DiseasedBAI <- as.numeric(row.names(DiseasedBAI))
+## Media annuale degli alberi sani:
+mean_HealthyBAI <- rowMeans(HealthyBAI, na.rm = TRUE)
+## Media annuale degli alberi malati:
+mean_DiseasedBAI <- rowMeans(DiseasedBAI, na.rm = TRUE)
+plot( years_HealthyBAI, mean_HealthyBAI, type="l", col="blue", lwd=2, xlab="Year", ylab="BAI (cm²/anno)" ) 
+      lines( years_DiseasedBAI, mean_DiseasedBAI, col="red", lwd=2 ) 
+     legend( "topright", legend=c("Beech No Malade", "Beech Malade"), col=c("blue","red"), lwd=2 )
+### Differenza di crescita tra i gruppi
+difference_BAI <- mean_HealthyBAI - mean_DiseasedBAI 
+plot( years, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )
+
+# RWI (Ring Width Index)
+## la crescita risponde diversamente a temperatura e precipitazioni?
+### PC Gembloux
 BeechTRWdetrend<-detrend(BeechTRW, method = "Spline", nyrs = 30)
 BeechChron<-chron(BeechTRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(BeechChron)
-## PC Sorsha
+### PC Sorsha
 head(BeechTRW)
 class(BeechTRW)
 BeechTRW <- as.data.frame(BeechTRW)
