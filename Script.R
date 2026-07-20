@@ -2,8 +2,8 @@
 setwd("C:/Users/sorsha/Desktop/Analisi Dendro 2026")
 # PC Sorsha
 setwd("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha")
-
 remove(list = ls())
+
 library("dplR")
 library("tidyverse")
 library("dplyr")
@@ -30,24 +30,124 @@ library(readxl)
 install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
-
+# DATI CLIMATICI
 prec<-read.table("Prec Chimay.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
 temp<-read.table("Temp Uccle.txt", header=TRUE)
 
-#BirchTRW<- read_excel("TOTAL_TRW.xlsx")
-BeechTRW<- read_xlsx("TRWBeech.xlsx")
-#BeechTRW<-read_excel("TRWBeechMalade.xlsx")
-BeechTRW[1]<-NULL
-row.names(BeechTRW)<-1819:2025
-rwi.stats(BeechTRW)
+PrecSites<-read.table("Prec Site.txt", header = TRUE)
+#temp <- read.table("tempBISHOP.txt", header = FALSE)
+TempSites<-read.table("Temp Site.txt", header=TRUE)
+
+# CREAZIONE FILE TUCSON CORRETTO PER COFECHA
+## IMPORT DEL FILE ORIGINALE: (il tuo campioni.rwl è letto come testo perché non è fixed width)
+raw <- read.table(
+  "campioni.rwl",
+  header = FALSE,
+  fill = TRUE
+)
+# Ricostruzione serie annuali
+campioni <- unique(raw$V1)
+serie <- list()
+for(s in campioni){
+  x <- raw[raw$V1 == s, ]
+  anni <- c()
+  valori <- c()
+  for(i in 1:nrow(x)){
+    anno_inizio <- x$V2[i]
+    valori_riga <- as.numeric(x[i,3:ncol(x)])
+    anni <- c(
+      anni,
+      anno_inizio + 0:(length(valori_riga)-1)
+    )
+    valori <- c(
+      valori,
+      valori_riga)
+  }
+serie[[s]] <- data.frame(
+    anno = anni,
+    valore = valori)
+}
+
+# CONTROLLO ANNI ANOMALI
+# individua eventuali ID concatenati con l'anno
+anni_min <- sapply(serie, function(x) min(x$anno))
+problemi <- names(anni_min[anni_min < 1000])
+if(length(problemi) > 0){
+  print("Attenzione: possibili campioni con anno errato:")
+  print(problemi)
+}                
+# correzione del caso trovato nel file
+if("FSMA134A1860" %in% names(serie)){
+  serie[["FSMA134A"]] <- serie[["FSMA134A1860"]]
+  serie[["FSMA134A"]]$anno <-
+    serie[["FSMA134A"]]$anno + 1786
+  serie[["FSMA134A1860"]] <- NULL
+}
+campioni <- names(serie)
+
+# CREAZIONE OGGETTO RWL
+anni <- unlist(lapply(serie, function(x)x$anno))
+anni_totali <- min(anni):max(anni)
+TRW <- matrix(
+  NA,
+  nrow = length(anni_totali),
+  ncol = length(campioni),
+  dimnames=list(
+    as.character(anni_totali),
+    campioni)
+)
+for(s in campioni){
+  TRW[
+    as.character(serie[[s]]$anno),
+    s
+  ] <-
+    serie[[s]]$valore
+}
+
+# codici mancanti Tucson
+TRW[TRW == 999] <- NA
+TRW <- as.data.frame(TRW)
+class(TRW) <- c("rwl","data.frame")
+
+# ESPORTAZIONE TUCSON PER COFECHA
+write.rwl(
+  TRW,
+  "CAMPIONI.rwl",
+  format = "tucson",
+  long.names = TRUE
+)
+
+# ANALISI DENDROCRONOLOGICA
+# ricarico il file Tucson pulito
+TRW <- read.rwl(
+  "campioni.rwl"
+)
+head(TRW)
+# Controllo qualità
+rwi.stats(TRW)
+rwi.stats.running(TRW)
+corr.rwl.seg(TRW)
 
 # BAI (Basal Area Increment = incrementO dell’area basale)
 ## gli alberi malati crescono meno?
-BeechBAI<-bai.in(BeechTRW)     # Basal Area Increment = incrementdell’area basale
-# rwi.stats(BirchTRW)
-rwi.stats.running(BeechTRW)    # analizza come cambiano le statistiche della crescita nel tempo.
-corr.rwl.seg(BeechTRW)         # controlla quanto gli alberi sono correlati tra loro
+BeechBAI <- bai.in(TRW)
+# Grafico serie grezze
+matplot(
+  as.numeric(rownames(TRW)),
+  TRW,
+  type="l",
+  xlab="Year",
+  ylab="Tree ring width"
+)                      
+# Standardizzazione
+TRWdetrend<-detrend(TRW, method = "Spline", nyrs = 30)
+# Cronologia                      
+BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
+plot.crn(BeechChron)                      
+                      
+
+
 
 # BAI Becch Malade/No Malade
 ## gli alberi malati presentano una crescita inferiore rispetto agli alberi sani?
