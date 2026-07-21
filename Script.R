@@ -41,7 +41,7 @@ TempSites<-read.table("Temp Site.txt", header=TRUE)
 
 # CREAZIONE FILE TUCSON CORRETTO PER COFECHA
 ## IMPORT DEL FILE ORIGINALE: (il tuo campioni.rwl è letto come testo perché non è fixed width)
-raw <- read.table("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha",
+raw <- read.table("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha/campioni.rwl",
   header = FALSE,
   fill = TRUE
 )
