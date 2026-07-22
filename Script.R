@@ -50,6 +50,9 @@ TRW <- read.table(
 head(TRW)
 dim(TRW)
 campioni <- unique(TRW$V1)
+
+serie <- list()
+
 for(s in campioni){
  
    x <- TRW[TRW$V1 == s, ]
