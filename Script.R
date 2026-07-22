@@ -50,31 +50,21 @@ TRW <- read.table(
 head(TRW)
 dim(TRW)
 campioni <- unique(TRW$V1)
-
 serie <- list()
-
 for(s in campioni){
- 
    x <- TRW[TRW$V1 == s, ]
- 
    anni <- c()
    valori <- c()
- 
    for(i in 1:nrow(x)){
- 
      anno_inizio <- x$V2[i]
- 
      valori_riga <- as.numeric(x[i, 3:ncol(x)])
      valori_riga <- valori_riga[!is.na(valori_riga)]
- 
      anni <- c(
        anni,
        anno_inizio:(anno_inizio + length(valori_riga) - 1)
      )
- 
      valori <- c(valori, valori_riga)
    }
- 
    serie[[s]] <- data.frame(
      anno = anni,
      valore = valori
@@ -136,11 +126,10 @@ write.rwl(
 # ANALISI DENDROCRONOLOGICA
 # ricarico il file Tucson pulito
 # PC Gembloux
-TRW <- read.rwl(
-  "campioni.rwl"
-)
-TRW <-
+# NO PC Sorsha                     
+TRW <- read.rwl("campioni.rwl")
 head(TRW)
+# Riprendere da qui                     
 # Controllo qualità
 rwi.stats(TRW)
 rwi.stats.running(TRW)
@@ -179,10 +168,12 @@ plot(dcc(BeechChron, temp, selection = -6:9, method = "correlation",
 class(PrecSites)
 head(PrecSites)
 dim(PrecSites)
-colnames(PrecSites)[13] <- "Jan"
+colnames(PrecSites) <- c("year",
+                         "Jan","Feb","Mar","Apr","May","Jun",
+                         "Jul","Aug","Sep","Oct","Nov","Dec")
 PrecSites <- PrecSites[, c("year",
-                            "Jan","Feb","Mar","Apr","May","Jun",
-                            "Jul","Aug","Sep","Oct","Nov","Dec")]
+                           "Jan","Feb","Mar","Apr","May","Jun",
+                           "Jul","Aug","Sep","Oct","Nov","Dec")]
 PrecSites$year <- 1901:2024
 PrecSites <- PrecSites[, c("year", setdiff(names(PrecSites), "year"))]
 PrecSites[,2:13] <- lapply(PrecSites[,2:13],
@@ -195,14 +186,10 @@ plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
 class(TempSites)
 head(TempSites)
 dim(TempSites) 
-colnames(TempSites) <- c(
-  "year",
-  "Jan","Feb","Mar","Apr","May","Jun",
-  "Jul","Aug","Sep","Oct","Nov","Dec"
-)
-TempSites[,2:13] <- lapply(TempSites[,2:13], function(x) {
-  as.numeric(gsub("\\.", "", x))
-})
+colnames(TempSites) <- c("year",
+                         "Jan","Feb","Mar","Apr","May","Jun",
+                         "Jul","Aug","Sep","Oct","Nov","Dec")
+TempSites[,2:13] <- lapply(TempSites[,2:13], function(x) {as.numeric(gsub("\\.", "", x))})
 summary(TempSites[,2:13])  
 TempSites[,2:13] <- TempSites[,2:13] / 1000000
 any(is.na(TempSites))
@@ -213,14 +200,73 @@ TempSites$year <- 1901:2023
 plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "temperature", boot = "std"))
 
-                
+### PLOT ###                       
+Precipitation <- plot(dcc(BeechChron, PrecSites, selection = -6:9,method = "correlation",
+           timespan = c(1930, 1990), var_names = "precipitation", boot = "std"))
+Temperature <- plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
+           timespan = c(1930, 1990), var_names = "temperature", boot = "std"))                          
 
-plot(dcc(BeechChron, PrecSites, selection = -6:9,method = "correlation",
-           timespan = c(1901, 2023), var_names = "precipitation", boot = "std"))
+pdf("DCC_prec_temp.pdf", width = 8, height = 10)
+par(mfrow = c(2,1))                          
+plot(Precipitation, main="Precipitation 1930-1990")                          
+plot(Temperature, main="Temperature 1930-1990")                           
+dev.off()
+                           
+### analisi clima-crescita                           
+month <- -6:9
+# 1) Periodo lungo (serie climatica completa)
+Prec1 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
+           timespan = c(1902,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-2023")
+Temp1 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
+           timespan = c(1902,2023), var_names = "temperature", boot = "std"), main = "Temperatura 1901-2023")
+pdf("DCC_prec_temp.pdf", width = 8, height = 10)
+par(mfrow = c(2,1))                          
+plot(Prec1, main="Precipitation 1901-2023")                          
+plot(Temp1, main="Temperature 1901-2023")                           
+dev.off()                           
+# 2) Periodo storico di confronto
+Prec2 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
+           timespan = c(1901,1990), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-1990")
+Temp2 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
+           timespan = c(1901,1990), var_names = "temperature", boot = "std"), main = "Temperatura 1901-1990")
+pdf("DCC_prec_temp.pdf", width = 8, height = 10)
+par(mfrow = c(2,1))                          
+plot(Prec2, main="Precipitation 1901-1990")                          
+plot(Temp2, main="Temperature 1901-1990")                           
+dev.off()                           
+# 3) Periodo recente (cambiamento climatico)
+Prec3 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
+           timespan = c(1950,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1950-2023")
+Temp3 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
+           timespan = c(1950,2023), var_names = "temperature", boot = "std"), main = "Temperatura 1950-2023")
+pdf("DCC_prec_temp.pdf", width = 8, height = 10)
+par(mfrow = c(2,1))                          
+plot(Prec3, main="Precipitation 1950-2023")                          
+plot(Temp3, main="Temperature 1950-2023")                           
+dev.off()
 
-plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
-           timespan = c(1901, 2023), var_names = "temperature", boot = "std"))
-
+## Periodo evento 2009
+Prec2009 <- plot(dcc(BeechChron, PrecSites, selection = 3:9, method = "correlation",
+           timespan = c(2000,2010), var_names = "precipitation", boot = "std"))
+Prec2009                           
+Temp2009 <- plot(dcc(BeechChron, TempSites, selection = 3:9, method = "correlation", 
+           timespan = c(2000,2010), var_names = "temperature", boot = "std")) 
+Temp2009                           
+pdf("DCC_prec_temp.pdf", width = 8, height = 10)
+par(mfrow = c(2,1))                          
+plot(Prec2009, main="Precipitation 2000-2010")                          
+plot(Temp2009, main="Temperature 2000-2010")                           
+dev.off()
+## Periodo evento 2018-2019
+Prec18 <- plot(dcc(BeechChron, PrecSites, selection = 3:9, method = "correlation",
+           timespan = c(2010,2023), var_names = "precipitation", boot = "std"))
+Temp18 <- plot(dcc(BeechChron, TempSites, selection = 3:9, method = "correlation",
+          timespan = c(2010,2023), var_names = "temperature", boot = "std"))                   
+pdf("DCC_prec_temp.pdf", width = 8, height = 10)
+par(mfrow = c(2,1))                          
+plot(Prec18, main="Precipitation 2010-2023")                          
+plot(Temp18, main="Temperature 2010-2023")                           
+dev.off()
 
 # BAI Becch Malade/No Malade
 ## gli alberi malati presentano una crescita inferiore rispetto agli alberi sani?
@@ -245,43 +291,7 @@ plot( years_HealthyBAI, mean_HealthyBAI, type="l", col="blue", lwd=2, xlab="Year
      legend( "topright", legend=c("Beech No Malade", "Beech Malade"), col=c("blue","red"), lwd=2 )
 ### Differenza di crescita tra i gruppi
 difference_BAI <- mean_HealthyBAI - mean_DiseasedBAI 
-plot( years_HealthyBAI, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )
-
-
-
-
-### analisi clima-crescita
-par(mfrow = c(2,2))                           
-month <- -6:9
-# 1) Periodo lungo (serie climatica completa)
-Prec1 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
-           timespan = c(1902,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-2023")
-Temp1 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
-           timespan = c(1902,2023), var_names = "temperature", boot = "std"), main = "Temperatura 1901-2023")
-# 2) Periodo storico di confronto
-plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
-           timespan = c(1901,1990), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-1990")
-plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
-           timespan = c(1901,1990), var_names = "temperature", boot = "std"), main = "Temperatura 1901-1990")
-# 3) Periodo recente (cambiamento climatico)
-plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
-           timespan = c(1950,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1950-2023")
-plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
-           timespan = c(1950,2023), var_names = "temperature", boot = "std"), main = "Temperatura 1950-2023")
-
-# Periodo evento 2009
-par(mfrow = c(2,2))
-plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
-           timespan = c(2000,2010), var_names = "precipitation", boot = "std"), main = "Precipitazioni 2000-2010")
-plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation", 
-           timespan = c(2000,2010), var_names = "temperature", boot = "std"), main = "Temperatura 2000-2010") 
-
-# Periodo evento 2018-2019
-plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
-           timespan = c(2010,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 2010-2023")
-plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
-          timespan = c(2010,2023), var_names = "temperature", boot = "std"), main = "Temperatura 2010-2023")                   
-
+plot( years_HealthyBAI, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )                           
 combiclim <-list(temp , prec)
 ClimaBegin <- 1891
 ClimaEnd <- 1990
