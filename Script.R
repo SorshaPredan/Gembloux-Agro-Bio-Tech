@@ -268,7 +268,7 @@ plot(Prec18, main="Precipitation 2010-2023")
 plot(Temp18, main="Temperature 2010-2023")                           
 dev.off()
 
-# BAI Becch Malade/No Malade
+# Becch Malade/No Malade
 ## gli alberi malati presentano una crescita inferiore rispetto agli alberi sani?
 HealthyTRW <- read_xlsx("TRWNoMalade.xlsx") 
 HealthyTRW <- as.data.frame(HealthyTRW)
@@ -278,6 +278,48 @@ HealthyTRW[1] <- NULL
 DiseasedTRW[1] <- NULL
 row.names(HealthyTRW)<-1819:2025
 row.names(DiseasedTRW)<-1819:2025
+
+# Controllo qualità
+rwi.stats(HealthyTRW)
+rwi.stats.running(HealthyTRW)
+corr.rwl.seg(HealthyTRW)
+# Controllo qualità
+rwi.stats(DiseasedTRW)
+rwi.stats.running(DiseasedTRW)
+corr.rwl.seg(DiseasedTRW) 
+# Standardizzazione
+HealthyTRWdetrend<-detrend(HealthyTRW, method = "Spline", nyrs = 30)
+# Cronologia                      
+HealthyBeechChron<-chron(HealthyTRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
+plot.crn(HealthyBeechChron)                      
+range(time(HealthyBeechChron))   
+# Standardizzazione                           
+DiseasedTRWdetrend<-detrend(DiseasedTRW, method = "Spline", nyrs = 30)
+# Cronologia                      
+DiseasedBeechChron<-chron(DiseasedTRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
+plot.crn(DiseasedBeechChron)                      
+range(time(DiseasedBeechChron))
+
+# Creazione del grafico vuoto usando il range temporale comune
+plot(time(HealthyBeechChron), HealthyBeechChron$std,
+     type = "l",
+     col = "blue",
+     lwd = 2,
+     ylim = range(c(HealthyBeechChron$std, DiseasedBeechChron$std), na.rm = TRUE),
+     xlab = "Year",
+     ylab = "Ring width index",
+     main = "Beech chronology: Healthy vs Diseased")
+# Aggiunta della cronologia Diseased
+lines(time(DiseasedBeechChron), DiseasedBeechChron$std,
+      col = "red",
+      lwd = 2)
+# Legenda
+legend("topright",
+       legend = c("Healthy", "Diseased"),
+       col = c("blue", "red"),
+       lwd = 2) 
+
+### BAI ###
 HealthyBAI <- bai.in(HealthyTRW)
 years_HealthyBAI <- as.numeric(row.names(HealthyBAI))
 DiseasedBAI <- bai.in(DiseasedTRW)
