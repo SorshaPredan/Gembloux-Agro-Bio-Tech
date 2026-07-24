@@ -40,82 +40,31 @@ PrecSites<-read.table("Prec Site.txt", header = TRUE)
 TempSites<-read.table("Temp Site.txt", header=TRUE)
 
 # CREAZIONE FILE TUCSON CORRETTO PER COFECHA
-## IMPORT DEL FILE ORIGINALE: (il tuo campioni.rwl è letto come testo perché non è fixed width)
-TRW <- read.table(
-   file.choose(),
-   header = FALSE,
-   fill = TRUE,
-   stringsAsFactors = FALSE
- )
+## IMPORT DEL FILE ORIGINALE
+TRW <- read_excel(
+  file.choose(),
+  col_names = FALSE
+)
+TRW <- as.data.frame(TRW)
 head(TRW)
 dim(TRW)
-campioni <- unique(TRW$V1)
-serie <- list()
-for(s in campioni){
-   x <- TRW[TRW$V1 == s, ]
-   anni <- c()
-   valori <- c()
-   for(i in 1:nrow(x)){
-     anno_inizio <- x$V2[i]
-     valori_riga <- as.numeric(x[i, 3:ncol(x)])
-     valori_riga <- valori_riga[!is.na(valori_riga)]
-     anni <- c(
-       anni,
-       anno_inizio:(anno_inizio + length(valori_riga) - 1)
-     )
-     valori <- c(valori, valori_riga)
-   }
-   serie[[s]] <- data.frame(
-     anno = anni,
-     valore = valori
-   )
-}
-length(serie)
-names(serie)[1:5]
-head(serie[[1]])
+# CONTROLLO STRUTTURA
+# La prima riga contiene i nomi dei campioni
+# La prima colonna contiene gli anni (YEARS)
+campioni <- as.character(TRW[1, -1])
+anni <- TRW[-1, 1]
 
-# CONTROLLO ANNI ANOMALI
-# individua eventuali ID concatenati con l'anno
-anni_min <- sapply(serie, function(x) min(x$anno))
-problemi <- names(anni_min[anni_min < 1000])
-if(length(problemi) > 0){
-  print("Attenzione: possibili campioni con anno errato:")
-  print(problemi)
-}                
-# correzione del caso trovato nel file
-if("FSMA134A1860" %in% names(serie)){
-  serie[["FSMA134A"]] <- serie[["FSMA134A1860"]]
-  serie[["FSMA134A"]]$anno <-
-    serie[["FSMA134A"]]$anno + 1786
-  serie[["FSMA134A1860"]] <- NULL
-}
-campioni <- names(serie)
-
-# CREAZIONE OGGETTO RWL
-anni <- unlist(lapply(serie, function(x)x$anno))
-anni_totali <- min(anni):max(anni)
-TRW <- matrix(
-  NA,
-  nrow = length(anni_totali),
-  ncol = length(campioni),
-  dimnames=list(
-    as.character(anni_totali),
-    campioni)
-)
-for(s in campioni){
-  TRW[
-    as.character(serie[[s]]$anno),
-    s
-  ] <-
-    serie[[s]]$valore
-}
-
-# codici mancanti Tucson
+# CREAZIONE MATRICE RWL
+TRW <- TRW[-1, -1]
+names(TRW) <- campioni
+TRW[] <- lapply(TRW, as.numeric)
+rownames(TRW) <- anni
 TRW[TRW == 999] <- NA
-TRW <- as.data.frame(TRW)
-class(TRW) <- c("rwl","data.frame")
+class(TRW) <- c("rwl", "data.frame")
+head(TRW)
+dim(TRW)
 
-# ESPORTAZIONE TUCSON PER COFECHA
+# ESPORTAZIONE FILE TUCSON PER COFECHA
 write.rwl(
   TRW,
   "CAMPIONI.rwl",
@@ -171,34 +120,106 @@ dim(PrecSites)
 colnames(PrecSites) <- c("year",
                          "Jan","Feb","Mar","Apr","May","Jun",
                          "Jul","Aug","Sep","Oct","Nov","Dec")
-PrecSites <- PrecSites[, c("year",
-                           "Jan","Feb","Mar","Apr","May","Jun",
-                           "Jul","Aug","Sep","Oct","Nov","Dec")]
-PrecSites$year <- 1901:2024
-PrecSites <- PrecSites[, c("year", setdiff(names(PrecSites), "year"))]
-PrecSites[,2:13] <- lapply(PrecSites[,2:13],
-                            function(x) as.numeric(gsub("\\.", "", x)))
-subset(PrecSites, year >= 1930 & year <= 1990) |> 
-   summary()
+PrecSites[,2:13] <- lapply(
+  PrecSites[,2:13],
+  function(x) as.numeric(gsub("\\.", "", x))
+)
+PrecSites[,2:13] <- PrecSites[,2:13] / 1000000
+summary(PrecSites[,2:13])
+duplicati <- PrecSites$year[duplicated(PrecSites$year)]
+PrecSites[PrecSites$year %in% duplicati, ]
+PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
 plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
+
 # Temperature
 class(TempSites)
 head(TempSites)
-dim(TempSites) 
+dim(TempSites)
 colnames(TempSites) <- c("year",
                          "Jan","Feb","Mar","Apr","May","Jun",
                          "Jul","Aug","Sep","Oct","Nov","Dec")
-TempSites[,2:13] <- lapply(TempSites[,2:13], function(x) {as.numeric(gsub("\\.", "", x))})
-summary(TempSites[,2:13])  
-TempSites[,2:13] <- TempSites[,2:13] / 1000000
-any(is.na(TempSites))
-diff(TempSites$year)
-tail(TempSites$year)
-TempSites <- TempSites[!duplicated(TempSites$year), ]                           
-TempSites$year <- 1901:2023
+TempSites[,2:13] <- lapply(
+  TempSites[,2:13],
+  function(x) as.numeric(gsub("\\.", "", x))
+)
+TempSites[,2:13] <- TempSites[,2:13] / 1000000   
+summary(TempSites[,2:13])
+duplicati_temp <- TempSites$year[duplicated(TempSites$year)]
+TempSites[TempSites$year %in% duplicati_temp, ]
+TempSites <- TempSites[!duplicated(TempSites$year), ]
 plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "temperature", boot = "std"))
+
+# CORRELAZIONE CLIMA
+## CORRELAZIONE TRW - PRECIPITAZIONI
+PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
+                  timespan = c(1930,1990), var_names = "precipitation",boot = "std")
+## CORRELAZIONE TRW - TEMPERATURA
+TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
+                  timespan = c(1930,1990), var_names = "temperature", boot = "std")
+
+# GRAFICO COMBINATO PEARSON r
+### Blu = precipitazioni
+### Rosso = temperatura
+# estrazione coefficienti Pearson
+prec <- PrecCorr$coef$coef
+temp <- TempCorr$coef$coef
+# mesi
+mesi <- PrecCorr$coef$month
+# matrice per il grafico
+corr_matrix <- rbind(
+  prec,
+  temp
+)
+# grafico
+barplot(
+  rbind(prec, temp),
+  beside = TRUE,
+  names.arg = mesi,
+  col = c("steelblue", "red"),
+  ylim = c(-0.75,0.75),
+  ylab = "Pearson r",
+  xlab = "Month",
+  las = 2
+)
+# linea dello zero
+abline(h = 0, lwd = 2)
+# legenda
+legend(
+  "topright",
+  legend = c("Precipitation", "Temperature"),
+  fill = c("steelblue", "red"),
+  bty = "n"
+)
+# Significatività delle correlazioni
+## * = correlazione significativa (bootstrap dcc)
+# recupero significatività
+sig_prec <- PrecCorr$coef$significant
+sig_temp <- TempCorr$coef$significant
+# recupero posizioni delle barre
+bar_position <- barplot(
+  corr_matrix,
+  beside = TRUE,
+  plot = FALSE
+)
+pos_prec <- bar_position[1,]
+pos_temp <- bar_position[2,]
+# aggiunta degli asterischi
+text(
+  pos_prec[sig_prec],
+  prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
+  "*",
+  cex = 1.5,
+  col = "steelblue"
+)
+text(
+  pos_temp[sig_temp],
+  temp[sig_temp] + 0.05 * sign(temp[sig_temp]),
+  "*",
+  cex = 1.5,
+  col = "red"
+)
 
 ### PLOT ###                       
 Precipitation <- plot(dcc(BeechChron, PrecSites, selection = -6:9,method = "correlation",
@@ -276,8 +297,8 @@ DiseasedTRW <- read_xlsx("TRWMalade.xlsx")
 DiseasedTRW <- as.data.frame(DiseasedTRW)
 HealthyTRW[1] <- NULL
 DiseasedTRW[1] <- NULL
-row.names(HealthyTRW)<-1819:2025
-row.names(DiseasedTRW)<-1819:2025
+row.names(HealthyTRW)<-1800:2025
+row.names(DiseasedTRW)<-1800:2025
 
 # Controllo qualità
 rwi.stats(HealthyTRW)
