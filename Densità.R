@@ -1,9 +1,34 @@
+# PC Gembloux
+setwd("C:/Users/sorsha/Desktop/Analisi Dendro 2026")
+# PC Sorsha
+setwd("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO")
+remove(list = ls())
 
+library("dplR")
+library("tidyverse")
+library("dplyr")
+library("treeclim")
+library("ggplot2")
+library("SPEI")
+library("pointRes")
+library("bootRes") # Watch out, the DCC command is the same as in treeclim, but different arguments!
+library("corrplot")
+library("Rcpp")
+library(data.table)
+library(stats)
+library(knitr)
+library(graphics)
+library(utils)
+#### Spatial Correlation ####
 
-library(dplyr)
-library(tidyr)
-library(readr)
-library(dplR)
+library(ncdf4)
+library(fields)
+library(Hmisc)
+library(mapdata)
+library(readxl)
+# Read in MXD
+install.packages("remotes")
+remotes::install_github("AllanBuras/dendRolAB")
 
 # LETTURA DATI XCT
 #### make XCT.read function ####
