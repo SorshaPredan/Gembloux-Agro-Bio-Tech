@@ -135,9 +135,9 @@ rwi.stats(TRW)
 rwi.stats.running(TRW)
 corr.rwl.seg(TRW)
 
-> library(openxlsx)
-> write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha/TRW.xlsx", rowNames = TRUE)
-> ls()
+library(openxlsx)
+write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha/TRW.xlsx", rowNames = TRUE)
+ls()
 
 # BAI (Basal Area Increment = incrementO dell’area basale)
 ## gli alberi malati crescono meno?
