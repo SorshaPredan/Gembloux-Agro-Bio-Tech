@@ -30,6 +30,15 @@ library(readxl)
 install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
+# DATI CLIMATICI
+prec<-read.table("Prec Chimay.txt", header = TRUE)
+#temp <- read.table("tempBISHOP.txt", header = FALSE)
+temp<-read.table("Temp Uccle.txt", header=TRUE)
+
+PrecSites<-read.table("Prec Site.txt", header = TRUE)
+#temp <- read.table("tempBISHOP.txt", header = FALSE)
+TempSites<-read.table("Temp Site.txt", header=TRUE)
+
 # LETTURA DATI XCT
 #### make XCT.read function ####
 XCT.read <- function(path,# A path to the folder containing the txt files
