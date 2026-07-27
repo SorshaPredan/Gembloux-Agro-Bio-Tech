@@ -31,13 +31,55 @@ install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
 # DATI CLIMATICI
-prec<-read.table("Prec Chimay.txt", header = TRUE)
-#temp <- read.table("tempBISHOP.txt", header = FALSE)
-temp<-read.table("Temp Uccle.txt", header=TRUE)
-
 PrecSites<-read.table("Prec Site.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
 TempSites<-read.table("Temp Site.txt", header=TRUE)
+# SITES
+# Precipitation
+class(PrecSites)
+head(PrecSites)
+dim(PrecSites)
+colnames(PrecSites) <- c("year",
+                         "Jan","Feb","Mar","Apr","May","Jun",
+                         "Jul","Aug","Sep","Oct","Nov","Dec")
+PrecSites[,2:13] <- lapply(
+  PrecSites[,2:13],
+  function(x) as.numeric(gsub("\\.", "", x))
+)
+PrecSites[,2:13] <- PrecSites[,2:13] / 1000000
+summary(PrecSites[,2:13])
+duplicati <- PrecSites$year[duplicated(PrecSites$year)]
+PrecSites[PrecSites$year %in% duplicati, ]
+PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
+plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
+           timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
+
+# Temperature
+class(TempSites)
+head(TempSites)
+dim(TempSites)
+colnames(TempSites) <- c("year",
+                         "Jan","Feb","Mar","Apr","May","Jun",
+                         "Jul","Aug","Sep","Oct","Nov","Dec")
+TempSites[,2:13] <- lapply(
+  TempSites[,2:13],
+  function(x) as.numeric(gsub("\\.", "", x))
+)
+TempSites[,2:13] <- TempSites[,2:13] / 1000000   
+summary(TempSites[,2:13])
+duplicati_temp <- TempSites$year[duplicated(TempSites$year)]
+TempSites[TempSites$year %in% duplicati_temp, ]
+TempSites <- TempSites[!duplicated(TempSites$year), ]
+plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
+           timespan = c(1930,1990), var_names = "temperature", boot = "std"))
+
+# CORRELAZIONE CLIMA
+## CORRELAZIONE TRW - PRECIPITAZIONI
+PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
+                  timespan = c(1930,1990), var_names = "precipitation",boot = "std")
+## CORRELAZIONE TRW - TEMPERATURA
+TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
+                  timespan = c(1930,1990), var_names = "temperature", boot = "std")
 
 # LETTURA DATI XCT
 #### make XCT.read function ####
