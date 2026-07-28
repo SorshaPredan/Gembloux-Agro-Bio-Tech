@@ -369,6 +369,65 @@ EWD <- XCT.read(
 )
 head(EWD)
 dim(EWD)
+class(EWD)
+class(EWD) <- c("rwl","data.frame")
+EWDChron <- chron(EWD)
+# EWD + Prec/Temp
+EWD_Prec <- dcc(EWDChron, PrecSites, selection = -6:9, method = "correlation",
+                   timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+class(EWD_Prec)
+plot(EWD_Prec)
+EWD_Temp <- dcc(EWDChron, TempSites, selection = -6:9, method = "correlation",
+                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+class(EWD_Temp)
+plot(EWD_Temp)
+
+# GRAFICO CORRELAZIONI EWD
+prec <- EWD_Prec$coef$coef
+temp <- EWD_Temp$coef$coef
+mesi <- EWD_Prec$coef$month
+# matrice correlazioni
+corr_matrix <- rbind(
+  prec,
+  temp
+)
+# grafico
+bar_position <- barplot(
+  corr_matrix,
+  beside = TRUE,
+  names.arg = mesi,
+  col = c("steelblue", "red"),
+  ylim = c(-0.75,0.75),
+  ylab = "Pearson r",
+  xlab = "Month",
+  las = 2,
+  main = "EWD - Climate correlations"
+)
+abline(h = 0, lwd = 2)
+legend(
+  "topright",
+  legend = c("Precipitation", "Temperature"),
+  fill = c("steelblue", "red"),
+  bty = "n"
+)
+sig_prec <- EWD_Prec$coef$significant
+sig_temp <- EWD_Temp$coef$significant
+pos_prec <- bar_position[1,]
+pos_temp <- bar_position[2,]
+text(
+  pos_prec[sig_prec],
+  prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
+  "*",
+  cex = 1.5,
+  col = "steelblue"
+)
+text(
+  pos_temp[sig_temp],
+  temp[sig_temp] + 0.05 * sign(temp[sig_temp]),
+  "*",
+  cex = 1.5,
+  col = "red"
+)
 
 # LATEWOOD DENSITY
 LWD <- XCT.read(
@@ -380,6 +439,65 @@ LWD <- XCT.read(
 )
 head(LWD)
 dim(LWD)
+class(LWD)
+class(LWD) <- c("rwl","data.frame")
+LWDChron <- chron(LWD)
+# LWD + Prec/Temp
+LWD_Prec <- dcc(LWDChron, PrecSites, selection = -6:9, method = "correlation",
+                   timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+class(LWD_Prec)
+plot(LWD_Prec)
+LWD_Temp <- dcc(LWDChron, TempSites, selection = -6:9, method = "correlation",
+                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+class(LWD_Temp)
+plot(LWD_Temp)
+
+# GRAFICO CORRELAZIONI LWD
+prec <- LWD_Prec$coef$coef
+temp <- LWD_Temp$coef$coef
+mesi <- LWD_Prec$coef$month
+# matrice correlazioni
+corr_matrix <- rbind(
+  prec,
+  temp
+)
+# grafico
+bar_position <- barplot(
+  corr_matrix,
+  beside = TRUE,
+  names.arg = mesi,
+  col = c("steelblue", "red"),
+  ylim = c(-0.75,0.75),
+  ylab = "Pearson r",
+  xlab = "Month",
+  las = 2,
+  main = "LWD - Climate correlations"
+)
+abline(h = 0, lwd = 2)
+legend(
+  "topright",
+  legend = c("Precipitation", "Temperature"),
+  fill = c("steelblue", "red"),
+  bty = "n"
+)
+sig_prec <- LWD_Prec$coef$significant
+sig_temp <- LWD_Temp$coef$significant
+pos_prec <- bar_position[1,]
+pos_temp <- bar_position[2,]
+text(
+  pos_prec[sig_prec],
+  prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
+  "*",
+  cex = 1.5,
+  col = "steelblue"
+)
+text(
+  pos_temp[sig_temp],
+  temp[sig_temp] + 0.05 * sign(temp[sig_temp]),
+  "*",
+  cex = 1.5,
+  col = "red"
+)
 
 # MAXIMUM DENSITY
 MXD <- XCT.read(
@@ -391,38 +509,9 @@ MXD <- XCT.read(
 )
 head(MXD)
 dim(MXD)
-
-class(EWD)
-class(LWD)
 class(MXD)
-class(EWD) <- c("rwl","data.frame")
-class(LWD) <- c("rwl","data.frame")
 class(MXD) <- c("rwl","data.frame")
-
-EWDChron <- chron(EWD)
-LWDChron <- chron(LWD)
 MXDChron <- chron(MXD)
-
-# EWD + Prec/Temp
-EWD_Prec <- dcc(EWDChron, PrecSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
-class(EWD_Prec)
-plot(EWD_Prec)
-EWD_Temp <- dcc(EWDChron, TempSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
-class(EWD_Temp)
-plot(EWD_Temp)
-
-# LWD + Prec/Temp
-LWD_Prec <- dcc(LWDChron, PrecSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
-class(LWD_Prec)
-plot(LWD_Prec)
-LWD_Temp <- dcc(LWDChron, TempSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
-class(LWD_Temp)
-plot(LWD_Temp)
-
 # MXD + Prec/Temp
 MXD_Prec <- dcc(MXDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
@@ -432,3 +521,155 @@ MXD_Temp <- dcc(MXDChron, TempSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Temperature", boot = "std")
 class(MXD_Temp)
 plot(MXD_Temp)
+
+# GRAFICO CORRELAZIONI MXD
+prec <- MXD_Prec$coef$coef
+temp <- MXD_Temp$coef$coef
+mesi <- MXD_Prec$coef$month
+# matrice correlazioni
+corr_matrix <- rbind(
+  prec,
+  temp
+)
+# grafico
+bar_position <- barplot(
+  corr_matrix,
+  beside = TRUE,
+  names.arg = mesi,
+  col = c("steelblue", "red"),
+  ylim = c(-0.75,0.75),
+  ylab = "Pearson r",
+  xlab = "Month",
+  las = 2,
+  main = "MXD - Climate correlations"
+)
+abline(h = 0, lwd = 2)
+legend(
+  "topright",
+  legend = c("Precipitation", "Temperature"),
+  fill = c("steelblue", "red"),
+  bty = "n"
+)
+sig_prec <- MXD_Prec$coef$significant
+sig_temp <- MXD_Temp$coef$significant
+pos_prec <- bar_position[1,]
+pos_temp <- bar_position[2,]
+text(
+  pos_prec[sig_prec],
+  prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
+  "*",
+  cex = 1.5,
+  col = "steelblue"
+)
+text(
+  pos_temp[sig_temp],
+  temp[sig_temp] + 0.05 * sign(temp[sig_temp]),
+  "*",
+  cex = 1.5,
+  col = "red"
+)
+
+### CRONOLOGIA PRECIPITAZIONI E TEMPERATURA ###
+# trasformazione cronologie in dataframe densità
+EWD_df <- data.frame(
+  year = as.numeric(rownames(EWDChron)),
+  density = EWDChron$std,
+  parameter = "EWD"
+)
+LWD_df <- data.frame(
+  year = as.numeric(rownames(LWDChron)),
+  density = LWDChron$std,
+  parameter = "LWD"
+)
+MXD_df <- data.frame(
+  year = as.numeric(rownames(MXDChron)),
+  density = MXDChron$std,
+  parameter = "MXD"
+)
+density_all <- bind_rows(EWD_df, LWD_df, MXD_df)
+head(density_all)
+table(density_all$parameter)
+
+# 3 DENSITA NEL TEMPO
+library(ggplot2)
+p_density <- ggplot(
+  density_all,
+  aes(
+    x = year,
+    y = density,
+    colour = parameter
+  )
+) +
+  geom_line(linewidth = 0.8) +
+  scale_colour_manual(
+    values = c(
+      EWD = "darkgreen",
+      LWD = "orange",
+      MXD = "red"
+    )
+  ) +
+  labs(
+    x = "Year",
+    y = "Density",
+    colour = "Chronology",
+    title = "Wood density chronologies"
+  ) +
+  theme_classic()
+
+p_density
+
+# grafico precipitazioni
+# precipitazione annuale
+Prec_year <- data.frame(
+  year = PrecSites$year,
+  precipitation = rowSums(PrecSites[,2:13], na.rm = TRUE)
+)
+head(Prec_year)
+dim(Prec_year)
+# temperatura annuale
+Temp_year <- data.frame(
+  year = TempSites$year,
+  temperature = rowMeans(TempSites[,2:13], na.rm = TRUE)
+)
+head(Temp_year)
+dim(Temp_year)
+# grafico con due assi Y
+library(patchwork)
+Climate_year <- merge(
+  Prec_year,
+  Temp_year,
+  by="year"
+)
+head(Climate_year)
+scale_factor <- max(Climate_year$precipitation) /
+                max(Climate_year$temperature)
+Climate_year$temp_scaled <- Climate_year$temperature * scale_factor
+p_climate <- ggplot(Climate_year, aes(x=year)) +
+  geom_line(
+    aes(y=precipitation),
+    colour="steelblue",
+    linewidth=0.8
+  ) +
+  geom_line(
+    aes(y=temp_scaled),
+    colour="red",
+    linewidth=0.8
+  ) +
+  scale_y_continuous(
+    name="Precipitation",
+    sec.axis = sec_axis(
+      ~./scale_factor,
+      name="Temperature"
+    )
+  ) +
+  labs(
+    x="Year"
+  ) +
+  theme_classic()
+p_climate
+
+p_density / p_climate
+
+
+
+
