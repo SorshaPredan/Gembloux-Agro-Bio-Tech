@@ -217,7 +217,7 @@ drought_events
 # PC Sorsha
 XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT/CORES"
 
-# EARLYWOOD DENSITY
+# EWD DENSITY
 EWD <- XCT.read(
   path = XCT_folder,
   output = "density",
@@ -229,10 +229,15 @@ head(EWD)
 dim(EWD)
 class(EWD)
 class(EWD) <- c("rwl","data.frame")
+# LWD DENSITY
 LWD <- XCT.read(
   path = XCT_folder,
   output = "density",
   densityType = "fraction",
-  area = c(0,0.25),
+  area = c(0.75,1),
   fun = "mean"
 )
+head(LWD)
+dim(LWD)
+class(LWD)
+class(LWD) <- c("rwl","data.frame")
