@@ -30,13 +30,13 @@ library(readxl)
 install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
-# DATI CLIMATICI
+# Climate Data
 PrecSites<-read.table("Prec Site.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
 TempSites<-read.table("Temp Site.txt", header=TRUE)
 
-# CREAZIONE FILE TUCSON CORRETTO PER COFECHA
-## IMPORT DEL FILE ORIGINALE
+# Preparation of the Tucson-format file for COFECHA analysis
+## Import of the original dataset
 TRW <- read_excel(
   file.choose(),
   col_names = FALSE
@@ -44,13 +44,13 @@ TRW <- read_excel(
 TRW <- as.data.frame(TRW)
 head(TRW)
 dim(TRW)
-# CONTROLLO STRUTTURA
-# La prima riga contiene i nomi dei campioni
-# La prima colonna contiene gli anni (YEARS)
+# File structure verification
+## The first row contains the sample identifiers
+## The first column contains the years (YEARS)
 campioni <- as.character(TRW[1, -1])
 anni <- TRW[-1, 1]
 
-# CREAZIONE MATRICE RWL
+# Creation of the ring-width measurement matrix (RWL)
 TRW <- TRW[-1, -1]
 names(TRW) <- campioni
 TRW[] <- lapply(TRW, as.numeric)
@@ -60,7 +60,7 @@ class(TRW) <- c("rwl", "data.frame")
 head(TRW)
 dim(TRW)
 
-# ESPORTAZIONE FILE TUCSON PER COFECHA
+# Export of the Tucson-format file for COFECHA analysis
 write.rwl(
   TRW,
   "CAMPIONI.rwl",
@@ -68,14 +68,14 @@ write.rwl(
   long.names = TRUE
 )
 
-# ANALISI DENDROCRONOLOGICA
-# ricarico il file Tucson pulito
-# PC Gembloux
-# NO PC Sorsha                     
+# DENDROCHRONOLOGICAL ANALYSIS
+## Loading the cleaned Tucson-format file
+### PC Gembloux
+### NO PC Sorsha                     
 TRW <- read.rwl("campioni.rwl")
 head(TRW)
-# Riprendere da qui                     
-# Controllo qualità
+### Continue from this point                     
+### Quality control
 rwi.stats(TRW)
 rwi.stats.running(TRW)
 corr.rwl.seg(TRW)
@@ -85,9 +85,9 @@ write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsh
 ls()
 
 # BAI (Basal Area Increment = incrementO dell’area basale)
-## gli alberi malati crescono meno?
+## Do diseased trees grow less?
 BeechBAI <- bai.in(TRW)
-# Grafico serie grezze
+### Plot of raw tree-ring series
 matplot(
   as.numeric(rownames(TRW)),
   TRW,
@@ -95,15 +95,15 @@ matplot(
   xlab="Year",
   ylab="Tree ring width"
 )                      
-# Standardizzazione
+### Standardization
 TRWdetrend<-detrend(TRW, method = "Spline", nyrs = 30)
-# Cronologia                      
+### Chronology                      
 BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(BeechChron)                      
 range(time(BeechChron))
 
 # SITES
-# Precipitation
+## Precipitation
 class(PrecSites)
 head(PrecSites)
 dim(PrecSites)
@@ -122,7 +122,7 @@ PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
 plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
 
-# Temperature
+## Temperature
 class(TempSites)
 head(TempSites)
 dim(TempSites)
@@ -141,15 +141,15 @@ TempSites <- TempSites[!duplicated(TempSites$year), ]
 plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "temperature", boot = "std"))
 
-# CORRELAZIONE CLIMA
-## CORRELAZIONE TRW - PRECIPITAZIONI
+# CLIMATE-GROWTH CORRELATION
+## Correlation TRW-Precipitation 
 PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
                   timespan = c(1930,1990), var_names = "precipitation",boot = "std")
-## CORRELAZIONE TRW - TEMPERATURA
+## Correlation TRW-Temperature
 TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
                   timespan = c(1930,1990), var_names = "temperature", boot = "std")
 
-# SPEI SUMMER
+### SPEI SUMMER ###
 spei_data <- data.frame(
   year = PrecSites$year,
   Jan = PrecSites$Jan - TempSites$Jan,
@@ -182,12 +182,12 @@ spei_summer <- spei(
   ),
   scale = 1
 )
-# Lo SPEI normalmente:
-# 0 = normale
-# negativo = siccità
-# -1 = siccità moderata
-# -1.5 = siccità severa
-# -2 = siccità estrema
+## SPEI classification:
+### 0 = normal conditions
+### negative values indicate drought
+### -1 = moderate drought
+### -1.5 = severe drought
+### -2 = extreme drought
 drought_years <- data.frame(
   year = spei_summer_data$year,
   spei = as.numeric(spei_summer$fitted)
@@ -199,7 +199,7 @@ extreme_drought <- drought_years[
 extreme_drought
 nrow(extreme_drought)
 
-# SEA (Superposed Epoch Analysis)
+### SEA (Superposed Epoch Analysis) ###
 extreme_drought$year %in% as.numeric(rownames(EWDChron))
 drought_events <- c(
   1922,
@@ -301,7 +301,7 @@ plot(
 abline(h = 0, lty = 2, col = "grey40")
 abline(v = 0, lty = 2, col = "red")
 
-# SEA 3 PARAMETRI
+## Superposed Epoch Analysis of EWD, LWD, and MXD
 SEA_all <- bind_rows(
   data.frame(
     lag = EWD_SEA$lag,
@@ -331,7 +331,7 @@ SEA_all <- SEA_all %>%
     )
   )
 head(SEA_all)
-# grafico
+### plot
 library(ggplot2)
 p_SEA <- ggplot(
   SEA_all,
