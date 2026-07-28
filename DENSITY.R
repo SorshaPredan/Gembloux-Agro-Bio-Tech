@@ -30,13 +30,13 @@ library(readxl)
 install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
-# DATI CLIMATICI
+# Climate Data
 PrecSites<-read.table("Prec Site.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
 TempSites<-read.table("Temp Site.txt", header=TRUE)
 
-# CREAZIONE FILE TUCSON CORRETTO PER COFECHA
-## IMPORT DEL FILE ORIGINALE
+# Preparation of the Tucson-format file for COFECHA analysis
+## Import of the original dataset
 TRW <- read_excel(
   file.choose(),
   col_names = FALSE
@@ -44,13 +44,13 @@ TRW <- read_excel(
 TRW <- as.data.frame(TRW)
 head(TRW)
 dim(TRW)
-# CONTROLLO STRUTTURA
-# La prima riga contiene i nomi dei campioni
-# La prima colonna contiene gli anni (YEARS)
+# File structure verification
+## The first row contains the sample identifiers
+## The first column contains the years (YEARS)
 campioni <- as.character(TRW[1, -1])
 anni <- TRW[-1, 1]
 
-# CREAZIONE MATRICE RWL
+# Creation of the ring-width measurement matrix (RWL)
 TRW <- TRW[-1, -1]
 names(TRW) <- campioni
 TRW[] <- lapply(TRW, as.numeric)
@@ -60,7 +60,7 @@ class(TRW) <- c("rwl", "data.frame")
 head(TRW)
 dim(TRW)
 
-# ESPORTAZIONE FILE TUCSON PER COFECHA
+# Export of the Tucson-format file for COFECHA analysis
 write.rwl(
   TRW,
   "CAMPIONI.rwl",
@@ -68,14 +68,14 @@ write.rwl(
   long.names = TRUE
 )
 
-# ANALISI DENDROCRONOLOGICA
-# ricarico il file Tucson pulito
-# PC Gembloux
-# NO PC Sorsha                     
+# DENDROCHRONOLOGICAL ANALYSIS
+## Loading the cleaned Tucson-format file
+### PC Gembloux
+### NO PC Sorsha                     
 TRW <- read.rwl("campioni.rwl")
 head(TRW)
-# Riprendere da qui                     
-# Controllo qualità
+### Continue from this point                     
+### Quality control
 rwi.stats(TRW)
 rwi.stats.running(TRW)
 corr.rwl.seg(TRW)
@@ -85,9 +85,9 @@ write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsh
 ls()
 
 # BAI (Basal Area Increment = incrementO dell’area basale)
-## gli alberi malati crescono meno?
+## Do diseased trees grow less?
 BeechBAI <- bai.in(TRW)
-# Grafico serie grezze
+### Plot of raw tree-ring series
 matplot(
   as.numeric(rownames(TRW)),
   TRW,
@@ -95,15 +95,15 @@ matplot(
   xlab="Year",
   ylab="Tree ring width"
 )                      
-# Standardizzazione
+### Standardization
 TRWdetrend<-detrend(TRW, method = "Spline", nyrs = 30)
-# Cronologia                      
+### Chronology                      
 BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(BeechChron)                      
 range(time(BeechChron))
 
 # SITES
-# Precipitation
+## Precipitation
 class(PrecSites)
 head(PrecSites)
 dim(PrecSites)
@@ -122,7 +122,7 @@ PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
 plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
 
-# Temperature
+## Temperature
 class(TempSites)
 head(TempSites)
 dim(TempSites)
@@ -141,15 +141,15 @@ TempSites <- TempSites[!duplicated(TempSites$year), ]
 plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "temperature", boot = "std"))
 
-# CORRELAZIONE CLIMA
-## CORRELAZIONE TRW - PRECIPITAZIONI
+# CLIMATE-GROWTH CORRELATION
+## Correlation TRW-Precipitation 
 PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
                   timespan = c(1930,1990), var_names = "precipitation",boot = "std")
-## CORRELAZIONE TRW - TEMPERATURA
+## Correlation TRW-Temperature
 TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
                   timespan = c(1930,1990), var_names = "temperature", boot = "std")
 
-# LETTURA DATI XCT
+# READING XCT DATA
 #### make XCT.read function ####
 XCT.read <- function(path,# A path to the folder containing the txt files
                      output = "ringwidth_density", # The output type, can be "ringwidth" (dplR format of ring width), "density" (dplR format of density parameter), "ringwidth_density" (long format of the sample, year, ring width, and density), or "density_profile" (long format of the sample, year, and density profile in that year)
@@ -211,7 +211,6 @@ XCT.read <- function(path,# A path to the folder containing the txt files
     return(data)
   }) %>% bind_rows() # Combine all data frames into one
   
-  
   # Load all _zpos_corr files
   files <- list.files(path, pattern = "_zpos_corr.txt", full.names = TRUE)
   # Function to read each file, add the file name, and combine all into one data frame
@@ -224,7 +223,6 @@ XCT.read <- function(path,# A path to the folder containing the txt files
     data <- data %>% mutate(Sample = file_name, row_number = row_number()-1)
     return(data)
   }) %>% bind_rows() # Combine all data frames into one
-  
 
   # Merge rings and zpos_corr by Sample and row_number to add start and end columns
   rings <- rings %>%
@@ -241,8 +239,6 @@ XCT.read <- function(path,# A path to the folder containing the txt files
     rings <- rings %>% filter(RW >= minRingWidth)  # remove rings with width smaller than minRingWidth
   }
   
-
-  
   # put year and Sample in density_corr
   density_map <- rings %>% # Create a helper data frame to link `Density_corr` with `rings`, This creates a mapping of Sample, Year, and the range of row_numbers for each ring
     select(Sample, Year, start, end) %>%
@@ -258,7 +254,6 @@ XCT.read <- function(path,# A path to the folder containing the txt files
     ungroup()
   Density_corr <- Density_corr[!is.na(Density_corr$Year),]   # remove NAs (gaps in density profile)
   
-  
   if (output == "density_profile") {
     # Return the density profile data frame in long format
     Density_corr <- Density_corr[, c("Sample", "Year", "row_number", "Density")] %>% 
@@ -267,7 +262,6 @@ XCT.read <- function(path,# A path to the folder containing the txt files
       group_by(Sample) %>% mutate(row_number_along_sample = row_number()) %>% ungroup()    # extra column that gives the pixel number along one whole sample
     return(Density_corr)
   }
-  
   
   # Function to calculate the mean of the top x values in a vector
   mean_top_x <- function(vec, x) {
@@ -354,11 +348,11 @@ XCT.read <- function(path,# A path to the folder containing the txt files
   }  
 }
 
-# PC Gembloux
+### Which months most strongly influence EWD, LWD, and MXD? ###
+## PC Gembloux
 XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
-# PC Sorsha
+## PC Sorsha
 XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT/CORES"
-
 # EARLYWOOD DENSITY
 EWD <- XCT.read(
   path = XCT_folder,
@@ -372,7 +366,7 @@ dim(EWD)
 class(EWD)
 class(EWD) <- c("rwl","data.frame")
 EWDChron <- chron(EWD)
-# EWD + Prec/Temp
+## EWD + Prec/Temp
 EWD_Prec <- dcc(EWDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
 class(EWD_Prec)
@@ -381,17 +375,16 @@ EWD_Temp <- dcc(EWDChron, TempSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Temperature", boot = "std")
 class(EWD_Temp)
 plot(EWD_Temp)
-
-# GRAFICO CORRELAZIONI EWD
+## EWD correlation plot
 prec <- EWD_Prec$coef$coef
 temp <- EWD_Temp$coef$coef
 mesi <- EWD_Prec$coef$month
-# matrice correlazioni
+### matrice correlazioni
 corr_matrix <- rbind(
   prec,
   temp
 )
-# grafico
+### grafico
 bar_position <- barplot(
   corr_matrix,
   beside = TRUE,
@@ -442,7 +435,7 @@ dim(LWD)
 class(LWD)
 class(LWD) <- c("rwl","data.frame")
 LWDChron <- chron(LWD)
-# LWD + Prec/Temp
+## LWD + Prec/Temp
 LWD_Prec <- dcc(LWDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
 class(LWD_Prec)
@@ -451,17 +444,16 @@ LWD_Temp <- dcc(LWDChron, TempSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Temperature", boot = "std")
 class(LWD_Temp)
 plot(LWD_Temp)
-
-# GRAFICO CORRELAZIONI LWD
+## LWD correlation plot
 prec <- LWD_Prec$coef$coef
 temp <- LWD_Temp$coef$coef
 mesi <- LWD_Prec$coef$month
-# matrice correlazioni
+### matrice correlazioni
 corr_matrix <- rbind(
   prec,
   temp
 )
-# grafico
+### grafico
 bar_position <- barplot(
   corr_matrix,
   beside = TRUE,
@@ -512,7 +504,7 @@ dim(MXD)
 class(MXD)
 class(MXD) <- c("rwl","data.frame")
 MXDChron <- chron(MXD)
-# MXD + Prec/Temp
+## MXD + Prec/Temp
 MXD_Prec <- dcc(MXDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
 class(MXD_Prec)
@@ -522,16 +514,16 @@ MXD_Temp <- dcc(MXDChron, TempSites, selection = -6:9, method = "correlation",
 class(MXD_Temp)
 plot(MXD_Temp)
 
-# GRAFICO CORRELAZIONI MXD
+## MXD correlation plot
 prec <- MXD_Prec$coef$coef
 temp <- MXD_Temp$coef$coef
 mesi <- MXD_Prec$coef$month
-# matrice correlazioni
+### matrice correlazioni
 corr_matrix <- rbind(
   prec,
   temp
 )
-# grafico
+### grafico
 bar_position <- barplot(
   corr_matrix,
   beside = TRUE,
@@ -569,8 +561,8 @@ text(
   col = "red"
 )
 
-### CRONOLOGIA PRECIPITAZIONI E TEMPERATURA ###
-# trasformazione cronologie in dataframe densità
+# PRECIPITATION AND TEMPERATURE CHRONOLOGIES
+## Conversion of chronologies into density data frames
 EWD_df <- data.frame(
   year = as.numeric(rownames(EWDChron)),
   density = EWDChron$std,
@@ -590,7 +582,7 @@ density_all <- bind_rows(EWD_df, LWD_df, MXD_df)
 head(density_all)
 table(density_all$parameter)
 
-# 3 DENSITA NEL TEMPO
+## Wood density chronologies over time
 library(ggplot2)
 p_density <- ggplot(
   density_all,
@@ -615,25 +607,24 @@ p_density <- ggplot(
     title = "Wood density chronologies"
   ) +
   theme_classic()
-
 p_density
 
-# grafico precipitazioni
-# precipitazione annuale
+# Precipitation and Temperature plot 
+## Annual precipitation
 Prec_year <- data.frame(
   year = PrecSites$year,
   precipitation = rowSums(PrecSites[,2:13], na.rm = TRUE)
 )
 head(Prec_year)
 dim(Prec_year)
-# temperatura annuale
+## Annual temperature
 Temp_year <- data.frame(
   year = TempSites$year,
   temperature = rowMeans(TempSites[,2:13], na.rm = TRUE)
 )
 head(Temp_year)
 dim(Temp_year)
-# grafico con due assi Y
+### Dual-axis plot
 library(patchwork)
 Climate_year <- merge(
   Prec_year,
@@ -670,6 +661,180 @@ p_climate
 
 p_density / p_climate
 
+### Has the relationship between temperature, precipitation, and EWD/LWD/MXD remained stable over time, or has it changed? ###
+## Summer temperature (JJA)
+Temp_JJA <- data.frame(
+  year = TempSites$year,
+  temperature = rowMeans(
+    TempSites[,c("Jun","Jul","Aug")],
+    na.rm = TRUE
+  )
+)
+head(Temp_JJA)
+Temp_JJA$z_temp <- as.numeric(scale(Temp_JJA$temperature))
 
+### EWD Z-SCORE
+EWD_z <- data.frame(
+  year = as.numeric(rownames(EWDChron)),
+  z = as.numeric(scale(EWDChron$std)),
+  parameter = "EWD"
+)
+head(EWD_z)
+### EWD + TEMPERATURA
+EWD_Temp_JJA <- merge(
+  EWD_z,
+  Temp_JJA,
+  by = "year"
+)
+head(EWD_Temp_JJA)
 
+### LWD Z-SCORE
+LWD_z <- data.frame(
+  year = as.numeric(rownames(LWDChron)),
+  z = as.numeric(scale(LWDChron$std)),
+  parameter = "LWD"
+)
+head(LWD_z)
+### LWD + TEMPERATURA
+LWD_Temp_JJA <- merge(
+  LWD_z,
+  Temp_JJA,
+  by = "year"
+)
 
+### MXD Z-SCORE
+MXD_z <- data.frame(
+  year = as.numeric(rownames(MXDChron)),
+  z = as.numeric(scale(MXDChron$std)),
+  parameter = "MXD"
+)
+head(MXD_z)
+### MXD + TEMPERATURA
+MXD_Temp_JJA <- merge(
+  MXD_z,
+  Temp_JJA,
+  by = "year"
+)
+head(MXD_Temp_JJA)
+
+# Z-score correlation analysis
+## EWD - temperature JJA
+EWD_cor <- cor.test(
+  EWD_Temp_JJA$z,
+  EWD_Temp_JJA$z_temp,
+  method = "pearson"
+)
+## LWD - temperature JJA
+LWD_cor <- cor.test(
+  LWD_Temp_JJA$z,
+  LWD_Temp_JJA$z_temp,
+  method = "pearson"
+)
+## MXD - temperature JJA
+MXD_cor <- cor.test(
+  MXD_Temp_JJA$z,
+  MXD_Temp_JJA$z_temp,
+  method = "pearson"
+)
+### Value extraction
+EWD_r <- EWD_cor$estimate
+EWD_p <- EWD_cor$p.value
+LWD_r <- LWD_cor$estimate
+LWD_p <- LWD_cor$p.value
+MXD_r <- MXD_cor$estimate
+MXD_p <- MXD_cor$p.value
+EWD_r
+EWD_p
+LWD_r
+LWD_p
+MXD_r
+MXD_p
+
+# Plot EWD - Temperature JJA ###
+library(ggplot2)
+ggplot(EWD_Temp_JJA, aes(x = year)) +
+  ### EWD Z-score variability band
+  geom_ribbon(
+    aes(
+      ymin = z - sd(z),
+      ymax = z + sd(z)
+    ),
+    fill = "darkgreen",
+    alpha = 0.15
+  ) +
+  ### line EWD
+  geom_line(
+    aes(y = z),
+    colour = "darkgreen",
+    linewidth = 1
+  ) +
+  ### line temperature
+  geom_line(
+    aes(y = z_temp),
+    colour = "red",
+    linewidth = 1
+  ) +
+  ### line at zero
+  geom_hline(
+    yintercept = 0,
+    colour = "grey50",
+    linetype = "dashed"
+  ) +
+  scale_y_continuous(
+    limits = c(-2.75,2.75)
+  ) +
+  labs(
+    title = paste0(
+      "EWD - Summer temperature relationship\n",
+      "Pearson r = ",
+      round(EWD_r,2),
+      "   p = ",
+      round(EWD_p,3)
+    ),
+    x = "Year",
+    y = "Z-score",
+    caption = "Green: EWD chronology | Red: summer temperature (JJA)"
+  ) +
+  theme_classic()
+
+### Plot LWD - Temperature JJA ###
+ggplot(LWD_Temp_JJA, aes(x = year)) +
+  geom_ribbon(
+    aes(
+      ymin = z - sd(z),
+      ymax = z + sd(z)
+    ),
+    fill = "orange",
+    alpha = 0.15
+  ) +
+  geom_line(
+    aes(y = z),
+    colour = "orange",
+    linewidth = 1
+  ) +
+  geom_line(
+    aes(y = z_temp),
+    colour = "red",
+    linewidth = 1
+  ) +
+  geom_hline(
+    yintercept = 0,
+    colour = "grey50",
+    linetype = "dashed"
+  ) +
+  scale_y_continuous(
+    limits = c(-2.75,2.75)
+  ) +
+  labs(
+    title = paste0(
+      "LWD - Summer temperature relationship\n",
+      "Pearson r = ",
+      round(LWD_r,2),
+      "   p = ",
+      round(LWD_p,3)
+    ),
+    x = "Year",
+    y = "Z-score",
+    caption = "Orange: LWD chronology | Red: summer temperature (JJA)"
+  ) +
+  theme_classic()
