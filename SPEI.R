@@ -1,4 +1,5 @@
-
+# PC Gembloux
+setwd("C:/Users/sorsha/Desktop/Analisi Dendro 2026")
 # PC Sorsha
 setwd("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha")
 remove(list = ls())
