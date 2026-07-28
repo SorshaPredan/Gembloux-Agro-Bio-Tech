@@ -34,6 +34,74 @@ remotes::install_github("AllanBuras/dendRolAB")
 PrecSites<-read.table("Prec Site.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
 TempSites<-read.table("Temp Site.txt", header=TRUE)
+
+# CREAZIONE FILE TUCSON CORRETTO PER COFECHA
+## IMPORT DEL FILE ORIGINALE
+TRW <- read_excel(
+  file.choose(),
+  col_names = FALSE
+)
+TRW <- as.data.frame(TRW)
+head(TRW)
+dim(TRW)
+# CONTROLLO STRUTTURA
+# La prima riga contiene i nomi dei campioni
+# La prima colonna contiene gli anni (YEARS)
+campioni <- as.character(TRW[1, -1])
+anni <- TRW[-1, 1]
+
+# CREAZIONE MATRICE RWL
+TRW <- TRW[-1, -1]
+names(TRW) <- campioni
+TRW[] <- lapply(TRW, as.numeric)
+rownames(TRW) <- anni
+TRW[TRW == 999] <- NA
+class(TRW) <- c("rwl", "data.frame")
+head(TRW)
+dim(TRW)
+
+# ESPORTAZIONE FILE TUCSON PER COFECHA
+write.rwl(
+  TRW,
+  "CAMPIONI.rwl",
+  format = "tucson",
+  long.names = TRUE
+)
+
+# ANALISI DENDROCRONOLOGICA
+# ricarico il file Tucson pulito
+# PC Gembloux
+# NO PC Sorsha                     
+TRW <- read.rwl("campioni.rwl")
+head(TRW)
+# Riprendere da qui                     
+# Controllo qualità
+rwi.stats(TRW)
+rwi.stats.running(TRW)
+corr.rwl.seg(TRW)
+
+library(openxlsx)
+write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha/TRW.xlsx", rowNames = TRUE)
+ls()
+
+# BAI (Basal Area Increment = incrementO dell’area basale)
+## gli alberi malati crescono meno?
+BeechBAI <- bai.in(TRW)
+# Grafico serie grezze
+matplot(
+  as.numeric(rownames(TRW)),
+  TRW,
+  type="l",
+  xlab="Year",
+  ylab="Tree ring width"
+)                      
+# Standardizzazione
+TRWdetrend<-detrend(TRW, method = "Spline", nyrs = 30)
+# Cronologia                      
+BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
+plot.crn(BeechChron)                      
+range(time(BeechChron))
+
 # SITES
 # Precipitation
 class(PrecSites)
@@ -82,10 +150,6 @@ TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
                   timespan = c(1930,1990), var_names = "temperature", boot = "std")
 
 # LETTURA DATI XCT
-# PC Gembloux
-XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
-# PC Sorsha
-XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
 #### make XCT.read function ####
 XCT.read <- function(path,# A path to the folder containing the txt files
                      output = "ringwidth_density", # The output type, can be "ringwidth" (dplR format of ring width), "density" (dplR format of density parameter), "ringwidth_density" (long format of the sample, year, ring width, and density), or "density_profile" (long format of the sample, year, and density profile in that year)
@@ -290,6 +354,11 @@ XCT.read <- function(path,# A path to the folder containing the txt files
   }  
 }
 
+# PC Gembloux
+XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
+# PC Sorsha
+XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT/CORES"
+
 # EARLYWOOD DENSITY
 EWD <- XCT.read(
   path = XCT_folder,
@@ -337,15 +406,29 @@ MXDChron <- chron(MXD)
 # EWD + Prec/Temp
 EWD_Prec <- dcc(EWDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+class(EWD_Prec)
+plot(EWD_Prec)
 EWD_Temp <- dcc(EWDChron, TempSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+class(EWD_Temp)
+plot(EWD_Temp)
+
 # LWD + Prec/Temp
 LWD_Prec <- dcc(LWDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+class(LWD_Prec)
+plot(LWD_Prec)
 LWD_Temp <- dcc(LWDChron, TempSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+class(LWD_Temp)
+plot(LWD_Temp)
+
 # MXD + Prec/Temp
 MXD_Prec <- dcc(MXDChron, PrecSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+class(MXD_Prec)
+plot(MXD_Prec)
 MXD_Temp <- dcc(MXDChron, TempSites, selection = -6:9, method = "correlation",
                    timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+class(MXD_Temp)
+plot(MXD_Temp)
