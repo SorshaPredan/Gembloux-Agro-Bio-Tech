@@ -1,7 +1,7 @@
 # PC Gembloux
 setwd("C:/Users/sorsha/Desktop/Analisi Dendro 2026")
 # PC Sorsha
-setwd("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO")
+setwd("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha")
 remove(list = ls())
 
 library("dplR")
@@ -82,6 +82,10 @@ TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
                   timespan = c(1930,1990), var_names = "temperature", boot = "std")
 
 # LETTURA DATI XCT
+# PC Gembloux
+XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
+# PC Sorsha
+XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
 #### make XCT.read function ####
 XCT.read <- function(path,# A path to the folder containing the txt files
                      output = "ringwidth_density", # The output type, can be "ringwidth" (dplR format of ring width), "density" (dplR format of density parameter), "ringwidth_density" (long format of the sample, year, ring width, and density), or "density_profile" (long format of the sample, year, and density profile in that year)
@@ -285,10 +289,6 @@ XCT.read <- function(path,# A path to the folder containing the txt files
     return(Data)
   }  
 }
-# PC Gembloux
-XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
-# PC Sorsha
-XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
 
 # EARLYWOOD DENSITY
 EWD <- XCT.read(
