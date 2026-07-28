@@ -218,26 +218,169 @@ drought_events
 XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT/CORES"
 
 # EWD DENSITY
-EWD <- XCT.read(
-  path = XCT_folder,
-  output = "density",
-  densityType = "fraction",
-  area = c(0,0.25),
-  fun = "mean"
+EWD_sea_data <- data.frame(
+  EWD = EWDChron$std
 )
-head(EWD)
-dim(EWD)
-class(EWD)
-class(EWD) <- c("rwl","data.frame")
+rownames(EWD_sea_data) <- rownames(EWDChron)
+class(EWD_sea_data) <- c("rwl","data.frame")
+EWD_SEA <- sea(
+  EWD_sea_data,
+  key = drought_events,
+  lag = 3,
+  resample = 1000
+)
+plot(EWD_SEA)
+
+plot(
+  EWD_SEA,
+  type = "b",
+  pch = 16,
+  col = "darkgreen",
+  lwd = 2,
+  cex = 1.2,
+  main = "SEA - EWD response to extreme drought",
+  xlab = "Years relative to drought event",
+  ylab = "Mean response"
+)
+abline(h = 0, lty = 2, col = "grey40")
+abline(v = 0, lty = 2, col = "red")
+
 # LWD DENSITY
-LWD <- XCT.read(
-  path = XCT_folder,
-  output = "density",
-  densityType = "fraction",
-  area = c(0.75,1),
-  fun = "mean"
+LWD_sea_data <- data.frame(
+  LWD = LWDChron$std
 )
-head(LWD)
-dim(LWD)
-class(LWD)
-class(LWD) <- c("rwl","data.frame")
+rownames(LWD_sea_data) <- rownames(LWDChron)
+class(LWD_sea_data) <- c("rwl","data.frame")
+LWD_SEA <- sea(
+  LWD_sea_data,
+  key = drought_events,
+  lag = 3,
+  resample = 1000
+)
+plot(LWD_SEA)
+
+plot(
+  LWD_SEA,
+  type = "b",
+  pch = 16,
+  col = "darkgreen",
+  lwd = 2,
+  cex = 1.2,
+  main = "SEA - LWD response to extreme drought",
+  xlab = "Years relative to drought event",
+  ylab = "Mean response"
+)
+abline(h = 0, lty = 2, col = "grey40")
+abline(v = 0, lty = 2, col = "red")
+
+# MXD DENSITY
+MXD_sea_data <- data.frame(
+  MXD = MXDChron$std
+)
+rownames(MXD_sea_data) <- rownames(MXDChron)
+class(MXD_sea_data) <- c("rwl","data.frame")
+MXD_SEA <- sea(
+  MXD_sea_data,
+  key = drought_events,
+  lag = 3,
+  resample = 1000
+)
+plot(MXD_SEA)
+
+plot(
+  MXD_SEA,
+  type = "b",
+  pch = 16,
+  col = "darkgreen",
+  lwd = 2,
+  cex = 1.2,
+  main = "SEA - MXD response to extreme drought",
+  xlab = "Years relative to drought event",
+  ylab = "Mean response"
+)
+abline(h = 0, lty = 2, col = "grey40")
+abline(v = 0, lty = 2, col = "red")
+
+# SEA 3 PARAMETRI
+SEA_all <- bind_rows(
+  data.frame(
+    lag = EWD_SEA$lag,
+    response = EWD_SEA$se,
+    p = EWD_SEA$p,
+    parameter = "EWD"
+  ),
+  data.frame(
+    lag = LWD_SEA$lag,
+    response = LWD_SEA$se,
+    p = LWD_SEA$p,
+    parameter = "LWD"
+  ),
+  data.frame(
+    lag = MXD_SEA$lag,
+    response = MXD_SEA$se,
+    p = MXD_SEA$p,
+    parameter = "MXD"
+  )
+)
+SEA_all <- SEA_all %>%
+  mutate(
+    sig = case_when(
+      p < 0.01 ~ "**",
+      p < 0.05 ~ "*",
+      TRUE ~ ""
+    )
+  )
+head(SEA_all)
+# grafico
+library(ggplot2)
+p_SEA <- ggplot(
+  SEA_all,
+  aes(
+    x = lag,
+    y = response,
+    colour = parameter
+  )
+) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 3) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    colour = "grey40"
+  ) +
+  geom_vline(
+    xintercept = 0,
+    linetype = "dashed",
+    colour = "red"
+  ) +
+  geom_text(
+    aes(
+      label = sig,
+      y = response + 0.05
+    ),
+    colour = "black",
+    size = 5
+  ) +
+  scale_colour_manual(
+    values = c(
+      EWD = "darkgreen",
+      LWD = "orange",
+      MXD = "red"
+    )
+  ) +
+ labs(
+  x = "Years relative to drought event",
+  y = "Mean standardized response",
+  colour = "Parameter",
+  title = "Superposed Epoch Analysis - Extreme drought events",
+  caption = "* p < 0.05; ** p < 0.01"
+) +
+  theme_classic() +
+theme(
+  plot.caption = element_text(
+    hjust = 0,
+    size = 10
+  )
+)
+
+p_SEA
