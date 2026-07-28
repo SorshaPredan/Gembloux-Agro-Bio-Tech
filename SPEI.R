@@ -148,3 +148,98 @@ PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
 ## CORRELAZIONE TRW - TEMPERATURA
 TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
                   timespan = c(1930,1990), var_names = "temperature", boot = "std")
+
+# SPEI SUMMER
+spei_data <- data.frame(
+  year = PrecSites$year,
+  Jan = PrecSites$Jan - TempSites$Jan,
+  Feb = PrecSites$Feb - TempSites$Feb,
+  Mar = PrecSites$Mar - TempSites$Mar,
+  Apr = PrecSites$Apr - TempSites$Apr,
+  May = PrecSites$May - TempSites$May,
+  Jun = PrecSites$Jun - TempSites$Jun,
+  Jul = PrecSites$Jul - TempSites$Jul,
+  Aug = PrecSites$Aug - TempSites$Aug,
+  Sep = PrecSites$Sep - TempSites$Sep,
+  Oct = PrecSites$Oct - TempSites$Oct,
+  Nov = PrecSites$Nov - TempSites$Nov,
+  Dec = PrecSites$Dec - TempSites$Dec
+)
+head(spei_data)
+spei_summer_data <- data.frame(
+  year = spei_data$year,
+  summer = rowMeans(
+    spei_data[,c("Jun","Jul","Aug")],
+    na.rm = TRUE
+  )
+)
+head(spei_summer_data)
+spei_summer <- spei(
+  ts(
+    spei_summer_data$summer,
+    start = min(spei_summer_data$year),
+    frequency = 1
+  ),
+  scale = 1
+)
+# Lo SPEI normalmente:
+# 0 = normale
+# negativo = siccità
+# -1 = siccità moderata
+# -1.5 = siccità severa
+# -2 = siccità estrema
+drought_years <- data.frame(
+  year = spei_summer_data$year,
+  spei = as.numeric(spei_summer$fitted)
+)
+head(drought_years)
+extreme_drought <- drought_years[
+  drought_years$spei <= -1.5,
+]
+extreme_drought
+nrow(extreme_drought)
+
+# SEA (Superposed Epoch Analysis)
+extreme_drought$year %in% as.numeric(rownames(EWDChron))
+drought_events <- c(
+  1922,
+  1927,
+  1953,
+  1965,
+  1972,
+  1980,
+  1987,
+  2007,
+  2012
+)
+drought_events
+
+class(EWD) <- c("rwl","data.frame")
+class(LWD) <- c("rwl","data.frame")
+class(MXD) <- c("rwl","data.frame")
+EWD_SEA <- sea(
+  EWD,
+  key = drought_events,
+  lag = 3,
+  resample = 1000
+)
+plot(EWD_SEA)
+
+LWD_SEA <- sea(
+  LWD,
+  key = drought_events,
+  lag = 3,
+  resample = 1000
+)
+plot(LWD_SEA)
+
+MXD_SEA <- sea(
+  MXD,
+  key = drought_events,
+  lag = 3,
+  resample = 1000
+)
+plot(MXD_SEA)
+range(as.numeric(rownames(EWDChron)))
+range(PrecSites$year)
+range(TempSites$year)
