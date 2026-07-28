@@ -214,32 +214,25 @@ drought_events <- c(
 )
 drought_events
 
+# PC Sorsha
+XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT/CORES"
+
+# EARLYWOOD DENSITY
+EWD <- XCT.read(
+  path = XCT_folder,
+  output = "density",
+  densityType = "fraction",
+  area = c(0,0.25),
+  fun = "mean"
+)
+head(EWD)
+dim(EWD)
+class(EWD)
 class(EWD) <- c("rwl","data.frame")
-class(LWD) <- c("rwl","data.frame")
-class(MXD) <- c("rwl","data.frame")
-EWD_SEA <- sea(
-  EWD,
-  key = drought_events,
-  lag = 3,
-  resample = 1000
+LWD <- XCT.read(
+  path = XCT_folder,
+  output = "density",
+  densityType = "fraction",
+  area = c(0,0.25),
+  fun = "mean"
 )
-plot(EWD_SEA)
-
-LWD_SEA <- sea(
-  LWD,
-  key = drought_events,
-  lag = 3,
-  resample = 1000
-)
-plot(LWD_SEA)
-
-MXD_SEA <- sea(
-  MXD,
-  key = drought_events,
-  lag = 3,
-  resample = 1000
-)
-plot(MXD_SEA)
-range(as.numeric(rownames(EWDChron)))
-range(PrecSites$year)
-range(TempSites$year)
