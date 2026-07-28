@@ -30,17 +30,13 @@ library(readxl)
 install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
-# DATI CLIMATICI
-prec<-read.table("Prec Chimay.txt", header = TRUE)
-#temp <- read.table("tempBISHOP.txt", header = FALSE)
-temp<-read.table("Temp Uccle.txt", header=TRUE)
-
+# Climate Data
 PrecSites<-read.table("Prec Site.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
 TempSites<-read.table("Temp Site.txt", header=TRUE)
 
-# CREAZIONE FILE TUCSON CORRETTO PER COFECHA
-## IMPORT DEL FILE ORIGINALE
+# Preparation of the Tucson-format file for COFECHA analysis
+## Import of the original dataset
 TRW <- read_excel(
   file.choose(),
   col_names = FALSE
@@ -48,13 +44,13 @@ TRW <- read_excel(
 TRW <- as.data.frame(TRW)
 head(TRW)
 dim(TRW)
-# CONTROLLO STRUTTURA
-# La prima riga contiene i nomi dei campioni
-# La prima colonna contiene gli anni (YEARS)
+# File structure verification
+## The first row contains the sample identifiers
+## The first column contains the years (YEARS)
 campioni <- as.character(TRW[1, -1])
 anni <- TRW[-1, 1]
 
-# CREAZIONE MATRICE RWL
+# Creation of the ring-width measurement matrix (RWL)
 TRW <- TRW[-1, -1]
 names(TRW) <- campioni
 TRW[] <- lapply(TRW, as.numeric)
@@ -64,7 +60,7 @@ class(TRW) <- c("rwl", "data.frame")
 head(TRW)
 dim(TRW)
 
-# ESPORTAZIONE FILE TUCSON PER COFECHA
+# Export of the Tucson-format file for COFECHA analysis
 write.rwl(
   TRW,
   "CAMPIONI.rwl",
@@ -72,14 +68,14 @@ write.rwl(
   long.names = TRUE
 )
 
-# ANALISI DENDROCRONOLOGICA
-# ricarico il file Tucson pulito
-# PC Gembloux
-# NO PC Sorsha                     
+# DENDROCHRONOLOGICAL ANALYSIS
+## Loading the cleaned Tucson-format file
+### PC Gembloux
+### NO PC Sorsha                     
 TRW <- read.rwl("campioni.rwl")
 head(TRW)
-# Riprendere da qui                     
-# Controllo qualità
+### Continue from this point                     
+### Quality control
 rwi.stats(TRW)
 rwi.stats.running(TRW)
 corr.rwl.seg(TRW)
@@ -89,9 +85,9 @@ write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsh
 ls()
 
 # BAI (Basal Area Increment = incrementO dell’area basale)
-## gli alberi malati crescono meno?
+## Do diseased trees grow less?
 BeechBAI <- bai.in(TRW)
-# Grafico serie grezze
+### Plot of raw tree-ring series
 matplot(
   as.numeric(rownames(TRW)),
   TRW,
@@ -99,21 +95,15 @@ matplot(
   xlab="Year",
   ylab="Tree ring width"
 )                      
-# Standardizzazione
+### Standardization
 TRWdetrend<-detrend(TRW, method = "Spline", nyrs = 30)
-# Cronologia                      
+### Chronology                      
 BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(BeechChron)                      
 range(time(BeechChron))
 
-plot(dcc(BeechChron, prec, selection = -6:9,method = "correlation",
-           timespan = c(1930, 1990), var_names = "precipitation", boot = "std"))
-
-plot(dcc(BeechChron, temp, selection = -6:9, method = "correlation",
-           timespan = c(1930,2018), var_names = "temperature", boot = "std"))
-
 # SITES
-# Precipitation
+## Precipitation
 class(PrecSites)
 head(PrecSites)
 dim(PrecSites)
@@ -132,7 +122,7 @@ PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
 plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
 
-# Temperature
+## Temperature
 class(TempSites)
 head(TempSites)
 dim(TempSites)
@@ -151,28 +141,28 @@ TempSites <- TempSites[!duplicated(TempSites$year), ]
 plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
            timespan = c(1930,1990), var_names = "temperature", boot = "std"))
 
-# CORRELAZIONE CLIMA
-## CORRELAZIONE TRW - PRECIPITAZIONI
+# CLIMATE-GROWTH CORRELATION
+## Correlation TRW-Precipitation 
 PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
                   timespan = c(1930,1990), var_names = "precipitation",boot = "std")
-## CORRELAZIONE TRW - TEMPERATURA
+## Correlation TRW-Temperature
 TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
                   timespan = c(1930,1990), var_names = "temperature", boot = "std")
 
-# GRAFICO COMBINATO PEARSON r
-### Blu = precipitazioni
-### Rosso = temperatura
-# estrazione coefficienti Pearson
+# Combined Pearson correlation plot
+### Blue = precipitation
+### Red = temperature
+## Extraction of Pearson correlation coefficients
 prec <- PrecCorr$coef$coef
 temp <- TempCorr$coef$coef
-# mesi
+### month
 mesi <- PrecCorr$coef$month
-# matrice per il grafico
+### matrix preparation for the plot
 corr_matrix <- rbind(
   prec,
   temp
 )
-# grafico
+### plot
 barplot(
   rbind(prec, temp),
   beside = TRUE,
@@ -183,21 +173,21 @@ barplot(
   xlab = "Month",
   las = 2
 )
-# linea dello zero
+### line at zero
 abline(h = 0, lwd = 2)
-# legenda
+### legend
 legend(
   "topright",
   legend = c("Precipitation", "Temperature"),
   fill = c("steelblue", "red"),
   bty = "n"
 )
-# Significatività delle correlazioni
-## * = correlazione significativa (bootstrap dcc)
-# recupero significatività
+# Statistical significance of correlations
+## * = significant correlations (DCC bootstrap)
+### extraction of significance values
 sig_prec <- PrecCorr$coef$significant
 sig_temp <- TempCorr$coef$significant
-# recupero posizioni delle barre
+### Extraction of bar positions
 bar_position <- barplot(
   corr_matrix,
   beside = TRUE,
@@ -205,7 +195,7 @@ bar_position <- barplot(
 )
 pos_prec <- bar_position[1,]
 pos_temp <- bar_position[2,]
-# aggiunta degli asterischi
+### addition of significance markers
 text(
   pos_prec[sig_prec],
   prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
@@ -233,9 +223,9 @@ plot(Precipitation, main="Precipitation 1930-1990")
 plot(Temperature, main="Temperature 1930-1990")                           
 dev.off()
                            
-### analisi clima-crescita                           
+### Climate–growth relationship analysis ###                       
 month <- -6:9
-# 1) Periodo lungo (serie climatica completa)
+# 1) Long-term period (complete climate series)
 Prec1 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
            timespan = c(1902,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-2023")
 Temp1 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
@@ -245,7 +235,7 @@ par(mfrow = c(2,1))
 plot(Prec1, main="Precipitation 1901-2023")                          
 plot(Temp1, main="Temperature 1901-2023")                           
 dev.off()                           
-# 2) Periodo storico di confronto
+# 2) Historical reference period
 Prec2 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
            timespan = c(1901,1990), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-1990")
 Temp2 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
@@ -255,7 +245,7 @@ par(mfrow = c(2,1))
 plot(Prec2, main="Precipitation 1901-1990")                          
 plot(Temp2, main="Temperature 1901-1990")                           
 dev.off()                           
-# 3) Periodo recente (cambiamento climatico)
+# 3) Recent period under climate change
 Prec3 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
            timespan = c(1950,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1950-2023")
 Temp3 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
@@ -266,31 +256,9 @@ plot(Prec3, main="Precipitation 1950-2023")
 plot(Temp3, main="Temperature 1950-2023")                           
 dev.off()
 
-## Periodo evento 2009
-Prec2009 <- plot(dcc(BeechChron, PrecSites, selection = 3:9, method = "correlation",
-           timespan = c(2000,2010), var_names = "precipitation", boot = "std"))
-Prec2009                           
-Temp2009 <- plot(dcc(BeechChron, TempSites, selection = 3:9, method = "correlation", 
-           timespan = c(2000,2010), var_names = "temperature", boot = "std")) 
-Temp2009                           
-pdf("DCC_prec_temp.pdf", width = 8, height = 10)
-par(mfrow = c(2,1))                          
-plot(Prec2009, main="Precipitation 2000-2010")                          
-plot(Temp2009, main="Temperature 2000-2010")                           
-dev.off()
-## Periodo evento 2018-2019
-Prec18 <- plot(dcc(BeechChron, PrecSites, selection = 3:9, method = "correlation",
-           timespan = c(2010,2023), var_names = "precipitation", boot = "std"))
-Temp18 <- plot(dcc(BeechChron, TempSites, selection = 3:9, method = "correlation",
-          timespan = c(2010,2023), var_names = "temperature", boot = "std"))                   
-pdf("DCC_prec_temp.pdf", width = 8, height = 10)
-par(mfrow = c(2,1))                          
-plot(Prec18, main="Precipitation 2010-2023")                          
-plot(Temp18, main="Temperature 2010-2023")                           
-dev.off()
 
+### Do diseased trees show lower growth compared to healthy trees? ###
 # Becch Malade/No Malade
-## gli alberi malati presentano una crescita inferiore rispetto agli alberi sani?
 HealthyTRW <- read_xlsx("TRWNoMalade.xlsx") 
 HealthyTRW <- as.data.frame(HealthyTRW)
 DiseasedTRW <- read_xlsx("TRWMalade.xlsx")
@@ -300,28 +268,28 @@ DiseasedTRW[1] <- NULL
 row.names(HealthyTRW)<-1800:2025
 row.names(DiseasedTRW)<-1800:2025
 
-# Controllo qualità
+## Tree-ring quality control
 rwi.stats(HealthyTRW)
 rwi.stats.running(HealthyTRW)
 corr.rwl.seg(HealthyTRW)
-# Controllo qualità
+## Tree-ring quality control
 rwi.stats(DiseasedTRW)
 rwi.stats.running(DiseasedTRW)
 corr.rwl.seg(DiseasedTRW) 
-# Standardizzazione
+## Tree-ring standardization
 HealthyTRWdetrend<-detrend(HealthyTRW, method = "Spline", nyrs = 30)
-# Cronologia                      
+## Tree-ring chronology                   
 HealthyBeechChron<-chron(HealthyTRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(HealthyBeechChron)                      
 range(time(HealthyBeechChron))   
-# Standardizzazione                           
+## Tree-ring standardization                          
 DiseasedTRWdetrend<-detrend(DiseasedTRW, method = "Spline", nyrs = 30)
-# Cronologia                      
+## Tree-ring chronology                    
 DiseasedBeechChron<-chron(DiseasedTRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(DiseasedBeechChron)                      
 range(time(DiseasedBeechChron))
 
-# Creazione del grafico vuoto usando il range temporale comune
+# Creation of an empty plot using the common time range
 plot(time(HealthyBeechChron), HealthyBeechChron$std,
      type = "l",
      col = "blue",
@@ -330,11 +298,11 @@ plot(time(HealthyBeechChron), HealthyBeechChron$std,
      xlab = "Year",
      ylab = "Ring width index",
      main = "Beech chronology: Healthy vs Diseased")
-# Aggiunta della cronologia Diseased
+### addition of the diseased tree-ring chronology
 lines(time(DiseasedBeechChron), DiseasedBeechChron$std,
       col = "red",
       lwd = 2)
-# Legenda
+### legend
 legend("topright",
        legend = c("Healthy", "Diseased"),
        col = c("blue", "red"),
@@ -345,14 +313,15 @@ HealthyBAI <- bai.in(HealthyTRW)
 years_HealthyBAI <- as.numeric(row.names(HealthyBAI))
 DiseasedBAI <- bai.in(DiseasedTRW)
 years_DiseasedBAI <- as.numeric(row.names(DiseasedBAI))
-## Media annuale degli alberi sani:
+## Annual mean chronology of healthy trees:
 mean_HealthyBAI <- rowMeans(HealthyBAI, na.rm = TRUE)
-## Media annuale degli alberi malati:
+## Annual mean chronology of diseased trees:
 mean_DiseasedBAI <- rowMeans(DiseasedBAI, na.rm = TRUE)
 plot( years_HealthyBAI, mean_HealthyBAI, type="l", col="blue", lwd=2, xlab="Year", ylab="BAI (cm²/anno)" ) 
       lines( years_DiseasedBAI, mean_DiseasedBAI, col="red", lwd=2 ) 
      legend( "topright", legend=c("Beech No Malade", "Beech Malade"), col=c("blue","red"), lwd=2 )
-### Differenza di crescita tra i gruppi
+
+# Differences in growth between groups
 difference_BAI <- mean_HealthyBAI - mean_DiseasedBAI 
 plot( years_HealthyBAI, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )                           
 combiclim <-list(temp , prec)
