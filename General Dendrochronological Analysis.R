@@ -187,15 +187,19 @@ legend(
 ### extraction of significance values
 sig_prec <- PrecCorr$coef$significant
 sig_temp <- TempCorr$coef$significant
-### Extraction of bar positions
+### creation of the barplot
 bar_position <- barplot(
   corr_matrix,
   beside = TRUE,
-  plot = FALSE
+  names.arg = colnames(corr_matrix),
+  col = c("steelblue", "red"),
+  ylim = c(-0.75, 0.75),
+  las = 2
 )
-pos_prec <- bar_position[1,]
-pos_temp <- bar_position[2,]
-### addition of significance markers
+### extraction of the positions of the two bar groups
+pos_prec <- bar_position[1, ]
+pos_temp <- bar_position[2, ]
+### addition of significance markers for precipitation
 text(
   pos_prec[sig_prec],
   prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
@@ -203,6 +207,7 @@ text(
   cex = 1.5,
   col = "steelblue"
 )
+### addition of significance markers for temperature
 text(
   pos_temp[sig_temp],
   temp[sig_temp] + 0.05 * sign(temp[sig_temp]),
@@ -325,6 +330,38 @@ plot( years_HealthyBAI, mean_HealthyBAI, type="l", col="blue", lwd=2, xlab="Year
 difference_BAI <- mean_HealthyBAI - mean_DiseasedBAI 
 plot( years_HealthyBAI, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )                           
 combiclim <-list(temp , prec)
-ClimaBegin <- 1891
-ClimaEnd <- 1990
-plot(seascorr(BeechChron,combiclim,timespan=c(ClimaBegin,ClimaEnd),complete = 8, season_lengths = c(3),primary = 1,secondary = 2, ci = 0.05))
+ClimaBegin <- 1902
+ClimaEnd <- 2023
+### Creation of the combined climate dataset
+combiclim <- list(
+  PrecSites,
+  TempSites
+)
+### Seasonal correlation analysis
+result <- seascorr(
+  BeechChron,
+  combiclim,
+  timespan = c(ClimaBegin, ClimaEnd),
+  complete = 8,
+  season_lengths = c(5),
+  primary = 1,
+  secondary = 2,
+  ci = 0.05
+)
+### Plot customization
+plot(result) +
+  scale_fill_manual(
+    values = c("grey85", "firebrick")
+  ) +
+  ggtitle("Seasonal climate-growth correlations") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      size = 14,
+      face = "bold"
+    ),
+    legend.position = "bottom",
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12)
+  )
