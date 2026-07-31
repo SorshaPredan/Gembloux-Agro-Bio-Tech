@@ -244,7 +244,6 @@ plot(
   xlab = "Years relative to drought event",
   ylab = "SEA response"
 )
-
 abline(h = 0, lty = 2, col = "grey40")
 abline(v = 0, lty = 2, col = "red")
 
@@ -263,15 +262,16 @@ LWD_SEA <- sea(
 plot(LWD_SEA)
 
 plot(
-  LWD_SEA,
+  LWD_SEA$lag,
+  LWD_SEA$se,
   type = "b",
   pch = 16,
-  col = "darkgreen",
+  col = "navy",
   lwd = 2,
   cex = 1.2,
   main = "SEA - LWD response to extreme drought",
   xlab = "Years relative to drought event",
-  ylab = "Mean response"
+  ylab = "SEA response"
 )
 abline(h = 0, lty = 2, col = "grey40")
 abline(v = 0, lty = 2, col = "red")
@@ -291,15 +291,17 @@ MXD_SEA <- sea(
 plot(MXD_SEA)
 
 plot(
-  MXD_SEA,
+  MXD_SEA$lag,
+  MXD_SEA$se,
   type = "b",
   pch = 16,
-  col = "darkgreen",
+  col = "steelblue",
   lwd = 2,
   cex = 1.2,
   main = "SEA - MXD response to extreme drought",
   xlab = "Years relative to drought event",
-  ylab = "Mean response"
+  ylab = "SEA response",
+  ylim = range(MXD_SEA$se) + c(-0.05, 0.05)
 )
 abline(h = 0, lty = 2, col = "grey40")
 abline(v = 0, lty = 2, col = "red")
@@ -334,6 +336,7 @@ SEA_all <- SEA_all %>%
     )
   )
 head(SEA_all)
+
 ### plot
 library(ggplot2)
 p_SEA <- ggplot(
@@ -375,7 +378,8 @@ p_SEA <- ggplot(
   x = "Years relative to drought event",
   y = "Mean standardized response",
   colour = "Parameter",
-  title = "Superposed Epoch Analysis - Extreme drought events",
+  title = "Superposed Epoch Analysis – Extreme drought events",
+  subtitle = "Drought years: 1922, 1927, 1953, 1965, 1972, 1980, 1987, 2007, 2012",
   caption = "* p < 0.05; ** p < 0.01"
 ) +
   theme_classic() +
