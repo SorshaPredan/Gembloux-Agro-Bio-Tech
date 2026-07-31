@@ -232,16 +232,19 @@ EWD_SEA <- sea(
 plot(EWD_SEA)
 
 plot(
-  EWD_SEA,
+  EWD_SEA$lag,
+  EWD_SEA$se,
   type = "b",
   pch = 16,
   col = "darkgreen",
   lwd = 2,
   cex = 1.2,
+  ylim = c(-0.8, -0.5),
   main = "SEA - EWD response to extreme drought",
   xlab = "Years relative to drought event",
-  ylab = "Mean response"
+  ylab = "SEA response"
 )
+
 abline(h = 0, lty = 2, col = "grey40")
 abline(v = 0, lty = 2, col = "red")
 
