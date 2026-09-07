@@ -31,9 +31,9 @@ install.packages("remotes")
 remotes::install_github("AllanBuras/dendRolAB")
 
 # Climate Data
-PrecSites<-read.table("Prec Site.txt", header = TRUE)
+PrecSites<-read.table("Prec1901.txt", header = TRUE)
 #temp <- read.table("tempBISHOP.txt", header = FALSE)
-TempSites<-read.table("Temp Site.txt", header=TRUE)
+TempSites<-read.table("Temp1901.txt", header=TRUE)
 
 # Preparation of the Tucson-format file for COFECHA analysis
 ## Import of the original dataset
