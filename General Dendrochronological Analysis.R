@@ -115,8 +115,8 @@ plot.crn(
 )
 range(time(BeechChron))
 
-# CLIMATE DATA
 
+# CLIMATE DATA
 ## PRECIPITATION
 class(PrecSites)
 head(PrecSites)
@@ -163,8 +163,6 @@ plot(
     boot = "std"
   )
 )
-
-
 
 ## TEMPERATURE
 class(TempSites)
