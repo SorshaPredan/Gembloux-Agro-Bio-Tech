@@ -115,13 +115,11 @@ colnames(PrecSites) <- c(
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
-## Convert monthly precipitation values to numeric
+## Ensure climate variables are numeric
 PrecSites[, 2:13] <- lapply(
   PrecSites[, 2:13],
-  function(x) as.numeric(gsub("\\.", "", x))
+  as.numeric
 )
-## Apply original dataset scaling
-PrecSites[, 2:13] <- PrecSites[, 2:13] / 1000000
 ## Check for duplicated years
 duplicati <- PrecSites$year[
   duplicated(PrecSites$year)
@@ -137,6 +135,8 @@ if (length(duplicati) > 0) {
 PrecSites <- PrecSites[
   !duplicated(PrecSites$year),
 ]
+## Check precipitation data
+summary(PrecSites[, 2:13])
 
 
 # Temp Data 
@@ -146,13 +146,11 @@ colnames(TempSites) <- c(
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
-## Convert monthly temperature values to numeric
+## Ensure climate variables are numeric
 TempSites[, 2:13] <- lapply(
   TempSites[, 2:13],
-  function(x) as.numeric(gsub("\\.", "", x))
+  as.numeric
 )
-## Apply original dataset scaling
-TempSites[, 2:13] <- TempSites[, 2:13] / 1000000
 ## Check for duplicated years
 duplicati_temp <- TempSites$year[
   duplicated(TempSites$year)
@@ -168,6 +166,8 @@ if (length(duplicati_temp) > 0) {
 TempSites <- TempSites[
   !duplicated(TempSites$year),
 ]
+## Check precipitation data
+summary(TempSites[, 2:13])
 
 
 
@@ -196,7 +196,7 @@ PrecCorr <- dcc(
   selection = climate_selection,
   method = "correlation",
   dynamic = "moving",
-  timespan = c(1930, 1990),
+  timespan = c(1901, 2025),
   var_names = "precipitation",
   boot = "std"
 )
@@ -204,7 +204,10 @@ PrecCorr <- dcc(
 ## Plot provided by treeclim
 plot(
   PrecCorr,
-  main = "Moving climate-growth correlation - Precipitation"
+  main = "Moving climate-growth correlations",
+  sub = "Precipitation × RWI | 25-year moving window",
+  xlab = "Year",
+  ylab = "Climate month"
 )
 
 
@@ -215,7 +218,7 @@ TempCorr <- dcc(
   selection = climate_selection,
   method = "correlation",
   dynamic = "moving",
-  timespan = c(1930, 1990),
+  timespan = c(1901, 2025),
   var_names = "temperature",
   boot = "std"
 )
@@ -536,3 +539,5 @@ heatmap_temp <- ggplot(
 
 ## Display temperature heatmap
 print(heatmap_temp)
+
+
