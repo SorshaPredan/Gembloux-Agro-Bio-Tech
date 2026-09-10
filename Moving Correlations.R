@@ -1,4 +1,70 @@
+# PC Sorsha
+setwd("C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha")
+remove(list = ls())
 
+library("dplR")
+library("tidyverse")
+library("dplyr")
+library("treeclim")
+library("ggplot2")
+library("SPEI")
+library("pointRes")
+library("bootRes") # Watch out, the DCC command is the same as in treeclim, but different arguments!
+library("corrplot")
+library("Rcpp")
+library(data.table)
+library(stats)
+library(knitr)
+library(graphics)
+library(utils)
+#### Spatial Correlation ####
+
+library(ncdf4)
+library(fields)
+library(Hmisc)
+library(mapdata)
+library(readxl)
+# Read in MXD
+install.packages("remotes")
+remotes::install_github("AllanBuras/dendRolAB")
+
+# Climate Data
+PrecSites<-read.table("Prec1901.txt", header = TRUE)
+#temp <- read.table("tempBISHOP.txt", header = FALSE)
+TempSites<-read.table("Temp1901.txt", header=TRUE)
+
+# Preparation of the Tucson-format file for COFECHA analysis
+## Import of the original dataset
+TRW <- read_excel(
+  file.choose(),
+  col_names = FALSE
+)
+TRW <- as.data.frame(TRW)
+head(TRW)
+dim(TRW)
+# File structure verification
+## The first row contains the sample identifiers
+## The first column contains the years (YEARS)
+campioni <- as.character(TRW[1, -1])
+anni <- TRW[-1, 1]
+
+# Creation of the ring-width measurement matrix (RWL)
+TRW <- TRW[-1, -1]
+names(TRW) <- campioni
+TRW[] <- lapply(TRW, as.numeric)
+rownames(TRW) <- anni
+TRW[TRW == 999] <- NA
+class(TRW) <- c("rwl", "data.frame")
+head(TRW)
+dim(TRW)
+
+# Export of the Tucson-format file for COFECHA analysis
+write.rwl(
+  TRW,
+  "CAMPIONI.rwl",
+  format = "tucson",
+  long.names = TRUE
+)
 
 ############################################################
 # 4. EXPORT RING-WIDTH DATA
