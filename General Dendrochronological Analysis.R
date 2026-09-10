@@ -18,7 +18,7 @@ library(data.table)
 library(stats)
 library(knitr)
 library(graphics)
-library(utils)
+library(utils) 
 #### Spatial Correlation ####
 
 library(ncdf4)
