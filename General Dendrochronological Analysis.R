@@ -84,182 +84,264 @@ library(openxlsx)
 write.xlsx(TRW, "C:/Users/user/Desktop/TIROCINIO FINALE/ANALISI DENDRO/pourSorsha/TRW.xlsx", rowNames = TRUE)
 ls()
 
-# BAI (Basal Area Increment = incrementO dell’area basale)
+
+# BAI - BASAL AREA INCREMENT
 ## Do diseased trees grow less?
 BeechBAI <- bai.in(TRW)
-### Plot of raw tree-ring series
+
+## TRW series 
 matplot(
   as.numeric(rownames(TRW)),
   TRW,
-  type="l",
-  xlab="Year",
-  ylab="Tree ring width"
-)                      
-### Standardization
-TRWdetrend<-detrend(TRW, method = "Spline", nyrs = 30)
-### Chronology                      
-BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
-plot.crn(BeechChron)                      
+  type = "l",
+  xlab = "Year",
+  ylab = "Tree-ring width"
+)
+## Standardization 
+TRWdetrend <- detrend(
+  TRW,
+  method = "Spline",
+  nyrs = 30
+)
+## Chronology CHRONOLOGY
+BeechChron <- chron(
+  TRWdetrend,
+  prefix = "AVG",
+  biweight = TRUE,
+  prewhiten = FALSE
+)
+plot.crn(
+  BeechChron
+)
 range(time(BeechChron))
 
-# SITES
-## Precipitation
+# CLIMATE DATA
+
+## PRECIPITATION
 class(PrecSites)
 head(PrecSites)
 dim(PrecSites)
-colnames(PrecSites) <- c("year",
-                         "Jan","Feb","Mar","Apr","May","Jun",
-                         "Jul","Aug","Sep","Oct","Nov","Dec")
-PrecSites[,2:13] <- lapply(
-  PrecSites[,2:13],
-  function(x) as.numeric(gsub("\\.", "", x))
-)
-PrecSites[,2:13] <- PrecSites[,2:13] / 1000000
-summary(PrecSites[,2:13])
-duplicati <- PrecSites$year[duplicated(PrecSites$year)]
-PrecSites[PrecSites$year %in% duplicati, ]
-PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
-plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
-           timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
 
-## Temperature
+## Set column names
+colnames(PrecSites) <- c(
+  "year",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+)
+## Climate data are already numeric
+PrecSites[, 2:13] <- lapply(
+  PrecSites[, 2:13],
+  as.numeric
+)
+## Check precipitation data
+summary(PrecSites[, 2:13])
+## Check for duplicated years
+duplicati <- PrecSites$year[
+  duplicated(PrecSites$year)
+]
+if (length(duplicati) > 0) {
+  print(
+    PrecSites[
+      PrecSites$year %in% duplicati,
+    ]
+  )
+}
+## Remove duplicated years
+PrecSites <- PrecSites[
+  !duplicated(PrecSites$year),
+]
+
+# DENDROCLIMATIC CORRELATION - PRECIPITATION
+plot(
+  dcc(
+    BeechChron,
+    PrecSites,
+    selection = -6:9,
+    method = "correlation",
+    timespan = c(1901, 2025),
+    var_names = "precipitation",
+    boot = "std"
+  )
+)
+
+
+
+## TEMPERATURE
 class(TempSites)
 head(TempSites)
 dim(TempSites)
-colnames(TempSites) <- c("year",
-                         "Jan","Feb","Mar","Apr","May","Jun",
-                         "Jul","Aug","Sep","Oct","Nov","Dec")
-TempSites[,2:13] <- lapply(
-  TempSites[,2:13],
-  function(x) as.numeric(gsub("\\.", "", x))
+
+## Set column names
+colnames(TempSites) <- c(
+  "year",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
-TempSites[,2:13] <- TempSites[,2:13] / 1000000   
-summary(TempSites[,2:13])
-duplicati_temp <- TempSites$year[duplicated(TempSites$year)]
-TempSites[TempSites$year %in% duplicati_temp, ]
-TempSites <- TempSites[!duplicated(TempSites$year), ]
-plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
-           timespan = c(1930,1990), var_names = "temperature", boot = "std"))
+## Climate data are already numeric
+TempSites[, 2:13] <- lapply(
+  TempSites[, 2:13],
+  as.numeric
+)
+## Check temperature data
+summary(TempSites[, 2:13])
+## Check for duplicated years
+duplicati_temp <- TempSites$year[
+  duplicated(TempSites$year)
+]
+if (length(duplicati_temp) > 0) {
+  print(
+    TempSites[
+      TempSites$year %in% duplicati_temp,
+    ]
+  )
+}
+## Remove duplicated years
+TempSites <- TempSites[
+  !duplicated(TempSites$year),
+]
+
+# DENDROCLIMATIC CORRELATION - TEMPERATURE
+plot(
+  dcc(
+    BeechChron,
+    TempSites,
+    selection = -6:9,
+    method = "correlation",
+    timespan = c(1901, 2025),
+    var_names = "temperature",
+    boot = "std"
+  )
+)
+
+
 
 # CLIMATE-GROWTH CORRELATION
-## Correlation TRW-Precipitation 
-PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
-                  timespan = c(1930,1990), var_names = "precipitation",boot = "std")
-## Correlation TRW-Temperature
-TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
-                  timespan = c(1930,1990), var_names = "temperature", boot = "std")
+## Correlation TRW - Prec 
+PrecCorr <- dcc(
+  BeechChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "precipitation",
+  boot = "std"
+)
 
-# Combined Pearson correlation plot
+## Correlation TRW - Temp
+TempCorr <- dcc(
+  BeechChron,
+  TempSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "temperature",
+  boot = "std"
+)
+
+
+
+# COMBINED PEARSON CORRELATION PLOT
 ### Blue = precipitation
-### Red = temperature
-## Extraction of Pearson correlation coefficients
+### Red  = temperature
+### *    = significant correlation
+
+## Extract correlation coefficients 
 prec <- PrecCorr$coef$coef
 temp <- TempCorr$coef$coef
-### month
-mesi <- PrecCorr$coef$month
-### matrix preparation for the plot
-corr_matrix <- rbind(
-  prec,
-  temp
+
+## Define climate month labels 
+mesi <- c(
+  "Jun (-1)",
+  "Jul (-1)",
+  "Aug (-1)",
+  "Sep (-1)",
+  "Oct (-1)",
+  "Nov (-1)",
+  "Dec (-1)",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep"
 )
-### plot
-barplot(
-  rbind(prec, temp),
-  beside = TRUE,
-  names.arg = mesi,
-  col = c("steelblue", "red"),
-  ylim = c(-0.75,0.75),
-  ylab = "Pearson r",
-  xlab = "Month",
-  las = 2
-)
-### line at zero
-abline(h = 0, lwd = 2)
-### legend
-legend(
-  "topright",
-  legend = c("Precipitation", "Temperature"),
-  fill = c("steelblue", "red"),
-  bty = "n"
-)
-# Statistical significance of correlations
-## * = significant correlations (DCC bootstrap)
-### extraction of significance values
+
+## Extract significance
 sig_prec <- PrecCorr$coef$significant
 sig_temp <- TempCorr$coef$significant
-### creation of the barplot
+
+## Create correlation matrix 
+corr_matrix <- rbind(
+  Precipitation = prec,
+  Temperature = temp
+)
+colnames(corr_matrix) <- mesi
+
+
+# Create Barplot 
 bar_position <- barplot(
   corr_matrix,
   beside = TRUE,
-  names.arg = colnames(corr_matrix),
-  col = c("steelblue", "red"),
+  names.arg = mesi,
+  col = c(
+    "steelblue",
+    "red"
+  ),
   ylim = c(-0.75, 0.75),
-  las = 2
+  ylab = "Pearson r",
+  xlab = "Climate month",
+  las = 2,
+  border = NA
 )
-### extraction of the positions of the two bar groups
-pos_prec <- bar_position[1, ]
-pos_temp <- bar_position[2, ]
-### addition of significance markers for precipitation
+abline(
+  h = 0,
+  lwd = 1.5
+)
+### Precipitation
 text(
-  pos_prec[sig_prec],
-  prec[sig_prec] + 0.05 * sign(prec[sig_prec]),
-  "*",
+  x = bar_position[1, sig_prec],
+  y = prec[sig_prec] +
+    ifelse(
+      prec[sig_prec] >= 0,
+      0.04,
+      -0.04
+    ),
+  labels = "*",
   cex = 1.5,
   col = "steelblue"
 )
-### addition of significance markers for temperature
+### Temperature
 text(
-  pos_temp[sig_temp],
-  temp[sig_temp] + 0.05 * sign(temp[sig_temp]),
-  "*",
+  x = bar_position[2, sig_temp],
+  y = temp[sig_temp] +
+    ifelse(
+      temp[sig_temp] >= 0,
+      0.04,
+      -0.04
+    ),
+  labels = "*",
   cex = 1.5,
   col = "red"
 )
+### Legend
+legend(
+  "topright",
+  legend = c(
+    "Precipitation",
+    "Temperature"
+  ),
+  fill = c(
+    "steelblue",
+    "red"
+  ),
+  bty = "n"
+)
 
-### PLOT ###                       
-Precipitation <- plot(dcc(BeechChron, PrecSites, selection = -6:9,method = "correlation",
-           timespan = c(1930, 1990), var_names = "precipitation", boot = "std"))
-Temperature <- plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
-           timespan = c(1930, 1990), var_names = "temperature", boot = "std"))                          
 
-pdf("DCC_prec_temp.pdf", width = 8, height = 10)
-par(mfrow = c(2,1))                          
-plot(Precipitation, main="Precipitation 1930-1990")                          
-plot(Temperature, main="Temperature 1930-1990")                           
-dev.off()
-                           
-### Climate–growth relationship analysis ###                       
-month <- -6:9
-# 1) Long-term period (complete climate series)
-Prec1 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
-           timespan = c(1902,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-2023")
-Temp1 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
-           timespan = c(1902,2023), var_names = "temperature", boot = "std"), main = "Temperatura 1901-2023")
-pdf("DCC_prec_temp.pdf", width = 8, height = 10)
-par(mfrow = c(2,1))                          
-plot(Prec1, main="Precipitation 1901-2023")                          
-plot(Temp1, main="Temperature 1901-2023")                           
-dev.off()                           
-# 2) Historical reference period
-Prec2 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
-           timespan = c(1901,1990), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1901-1990")
-Temp2 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
-           timespan = c(1901,1990), var_names = "temperature", boot = "std"), main = "Temperatura 1901-1990")
-pdf("DCC_prec_temp.pdf", width = 8, height = 10)
-par(mfrow = c(2,1))                          
-plot(Prec2, main="Precipitation 1901-1990")                          
-plot(Temp2, main="Temperature 1901-1990")                           
-dev.off()                           
-# 3) Recent period under climate change
-Prec3 <- plot(dcc(BeechChron, PrecSites, selection = month, method = "correlation",
-           timespan = c(1950,2023), var_names = "precipitation", boot = "std"), main = "Precipitazioni 1950-2023")
-Temp3 <- plot(dcc(BeechChron, TempSites, selection = month, method = "correlation",
-           timespan = c(1950,2023), var_names = "temperature", boot = "std"), main = "Temperatura 1950-2023")
-pdf("DCC_prec_temp.pdf", width = 8, height = 10)
-par(mfrow = c(2,1))                          
-plot(Prec3, main="Precipitation 1950-2023")                          
-plot(Temp3, main="Temperature 1950-2023")                           
-dev.off()
+
 
 
 ### Do diseased trees show lower growth compared to healthy trees? ###
@@ -322,16 +404,42 @@ years_DiseasedBAI <- as.numeric(row.names(DiseasedBAI))
 mean_HealthyBAI <- rowMeans(HealthyBAI, na.rm = TRUE)
 ## Annual mean chronology of diseased trees:
 mean_DiseasedBAI <- rowMeans(DiseasedBAI, na.rm = TRUE)
-plot( years_HealthyBAI, mean_HealthyBAI, type="l", col="blue", lwd=2, xlab="Year", ylab="BAI (cm²/anno)" ) 
-      lines( years_DiseasedBAI, mean_DiseasedBAI, col="red", lwd=2 ) 
-     legend( "topright", legend=c("Beech No Malade", "Beech Malade"), col=c("blue","red"), lwd=2 )
+plot(
+  years_HealthyBAI,
+  mean_HealthyBAI,
+  type = "l",
+  col = "blue",
+  lwd = 2,
+  xlab = "Year",
+  ylab = expression("Basal Area Increment (cm"^2*")"),
+  main = "Annual Basal Area Increment (BAI)"
+)
+lines(
+  years_DiseasedBAI,
+  mean_DiseasedBAI,
+  col = "red",
+  lwd = 2
+)
+legend(
+  "topright",
+  legend = c(
+    "Healthy trees",
+    "Diseased trees"
+  ),
+  col = c(
+    "blue",
+    "red"
+  ),
+  lwd = 2,
+  bty = "n"
+)
 
 # Differences in growth between groups
 difference_BAI <- mean_HealthyBAI - mean_DiseasedBAI 
 plot( years_HealthyBAI, difference_BAI, type="l", xlab="Anno", ylab="Differenza BAI (sani - malati)" )                           
 combiclim <-list(temp , prec)
-ClimaBegin <- 1902
-ClimaEnd <- 2023
+ClimaBegin <- 1901
+ClimaEnd <- 2025
 ### Creation of the combined climate dataset
 combiclim <- list(
   PrecSites,
