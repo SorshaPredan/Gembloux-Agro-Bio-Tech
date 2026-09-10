@@ -510,7 +510,7 @@ MXD_Prec <- dcc(MXDChron, PrecSites, selection = -6:9, method = "correlation",
 class(MXD_Prec)
 plot(MXD_Prec)
 MXD_Temp <- dcc(MXDChron, TempSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+                   timespan = c(1901,2025), var_names = "Temperature", boot = "std", dynamic="movying")
 class(MXD_Temp)
 plot(MXD_Temp)
 
