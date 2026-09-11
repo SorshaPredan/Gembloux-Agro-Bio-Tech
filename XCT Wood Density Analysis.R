@@ -102,52 +102,123 @@ BeechChron<-chron(TRWdetrend,prefix = "AVG", biweight = TRUE, prewhiten = FALSE)
 plot.crn(BeechChron)                      
 range(time(BeechChron))
 
-# SITES
-## Precipitation
+# CLIMATE DATA
+## PRECIPITATION
 class(PrecSites)
 head(PrecSites)
 dim(PrecSites)
-colnames(PrecSites) <- c("year",
-                         "Jan","Feb","Mar","Apr","May","Jun",
-                         "Jul","Aug","Sep","Oct","Nov","Dec")
-PrecSites[,2:13] <- lapply(
-  PrecSites[,2:13],
-  function(x) as.numeric(gsub("\\.", "", x))
-)
-PrecSites[,2:13] <- PrecSites[,2:13] / 1000000
-summary(PrecSites[,2:13])
-duplicati <- PrecSites$year[duplicated(PrecSites$year)]
-PrecSites[PrecSites$year %in% duplicati, ]
-PrecSites <- PrecSites[!duplicated(PrecSites$year), ]
-plot(dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
-           timespan = c(1930,1990), var_names = "precipitation", boot = "std"))
 
-## Temperature
+## Set column names
+colnames(PrecSites) <- c(
+  "year",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+)
+## Climate data are already numeric
+PrecSites[, 2:13] <- lapply(
+  PrecSites[, 2:13],
+  as.numeric
+)
+## Check precipitation data
+summary(PrecSites[, 2:13])
+## Check for duplicated years
+duplicati <- PrecSites$year[
+  duplicated(PrecSites$year)
+]
+if (length(duplicati) > 0) {
+  print(
+    PrecSites[
+      PrecSites$year %in% duplicati,
+    ]
+  )
+}
+## Remove duplicated years
+PrecSites <- PrecSites[
+  !duplicated(PrecSites$year),
+]
+
+# DENDROCLIMATIC CORRELATION - PRECIPITATION
+plot(
+  dcc(
+    BeechChron,
+    PrecSites,
+    selection = -6:9,
+    method = "correlation",
+    timespan = c(1901, 2025),
+    var_names = "precipitation",
+    boot = "std"
+  )
+)
+
+## TEMPERATURE
 class(TempSites)
 head(TempSites)
 dim(TempSites)
-colnames(TempSites) <- c("year",
-                         "Jan","Feb","Mar","Apr","May","Jun",
-                         "Jul","Aug","Sep","Oct","Nov","Dec")
-TempSites[,2:13] <- lapply(
-  TempSites[,2:13],
-  function(x) as.numeric(gsub("\\.", "", x))
+
+## Set column names
+colnames(TempSites) <- c(
+  "year",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
-TempSites[,2:13] <- TempSites[,2:13] / 1000000   
-summary(TempSites[,2:13])
-duplicati_temp <- TempSites$year[duplicated(TempSites$year)]
-TempSites[TempSites$year %in% duplicati_temp, ]
-TempSites <- TempSites[!duplicated(TempSites$year), ]
-plot(dcc(BeechChron, TempSites, selection = -6:9, method = "correlation",
-           timespan = c(1930,1990), var_names = "temperature", boot = "std"))
+## Climate data are already numeric
+TempSites[, 2:13] <- lapply(
+  TempSites[, 2:13],
+  as.numeric
+)
+## Check temperature data
+summary(TempSites[, 2:13])
+## Check for duplicated years
+duplicati_temp <- TempSites$year[
+  duplicated(TempSites$year)
+]
+if (length(duplicati_temp) > 0) {
+  print(
+    TempSites[
+      TempSites$year %in% duplicati_temp,
+    ]
+  )
+}
+## Remove duplicated years
+TempSites <- TempSites[
+  !duplicated(TempSites$year),
+]
+
+# DENDROCLIMATIC CORRELATION - TEMPERATURE
+plot(
+  dcc(
+    BeechChron,
+    TempSites,
+    selection = -6:9,
+    method = "correlation",
+    timespan = c(1901, 2025),
+    var_names = "temperature",
+    boot = "std"
+  )
+)
+
 
 # CLIMATE-GROWTH CORRELATION
-## Correlation TRW-Precipitation 
-PrecCorr <- dcc(BeechChron, PrecSites, selection = -6:9, method = "correlation",
-                  timespan = c(1930,1990), var_names = "precipitation",boot = "std")
-## Correlation TRW-Temperature
-TempCorr <- dcc(BeechChron,TempSites,selection = -6:9,method = "correlation",
-                  timespan = c(1930,1990), var_names = "temperature", boot = "std")
+## Correlation TRW - Prec 
+PrecCorr <- dcc(
+  BeechChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "precipitation",
+  boot = "std"
+)
+## Correlation TRW - Temp
+TempCorr <- dcc(
+  BeechChron,
+  TempSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "temperature",
+  boot = "std"
+)
 
 # READING XCT DATA
 #### make XCT.read function ####
@@ -353,6 +424,8 @@ XCT.read <- function(path,# A path to the folder containing the txt files
 XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT"
 ## PC Sorsha
 XCT_folder <- "C:/Users/user/Desktop/TIROCINIO FINALE/DENSITA/XCT/CORES"
+
+
 # EARLYWOOD DENSITY
 EWD <- XCT.read(
   path = XCT_folder,
@@ -368,11 +441,11 @@ class(EWD) <- c("rwl","data.frame")
 EWDChron <- chron(EWD)
 ## EWD + Prec/Temp
 EWD_Prec <- dcc(EWDChron, PrecSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+                   timespan = c(1901,2025), var_names = "Precipitation", boot = "std")
 class(EWD_Prec)
 plot(EWD_Prec)
 EWD_Temp <- dcc(EWDChron, TempSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+                   timespan = c(1901,2025), var_names = "Temperature", boot = "std")
 class(EWD_Temp)
 plot(EWD_Temp)
 ## EWD correlation plot
@@ -422,6 +495,76 @@ text(
   col = "red"
 )
 
+
+# EWD + Precipitation: MOVING CORRELATION
+EWD_Prec_moving <- dcc(
+  EWDChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901,2025),
+  var_names = "Precipitation",
+  boot = "std",
+  dynamic = "moving"
+)
+
+EWD_Prec_moving <- dcc(
+  EWDChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901,2025),
+  var_names = "Precipitation",
+  boot = "std",
+  dynamic = "moving"
+)
+
+## Plot
+plot(EWD_Prec_moving)
+
+
+# EWD + Temperature: MOVING CORRELATION
+TempSites_moving <- data.frame(
+  year = as.numeric(TempSites$year),
+  Jan = as.numeric(TempSites$Jan),
+  Feb = as.numeric(TempSites$Feb),
+  Mar = as.numeric(TempSites$Mar),
+  Apr = as.numeric(TempSites$Apr),
+  May = as.numeric(TempSites$May),
+  Jun = as.numeric(TempSites$Jun),
+  Jul = as.numeric(TempSites$Jul),
+  Aug = as.numeric(TempSites$Aug),
+  Sep = as.numeric(TempSites$Sep),
+  Oct = as.numeric(TempSites$Oct),
+  Nov = as.numeric(TempSites$Nov),
+  Dec = as.numeric(TempSites$Dec)
+)
+
+str(TempSites_moving)
+sum(complete.cases(TempSites_moving))
+sum(!complete.cases(TempSites_moving))
+TempSites_moving <- TempSites_moving[
+  complete.cases(TempSites_moving),
+]
+
+
+EWD_Temp_moving <- dcc(
+  EWDChron,
+  TempSites_moving,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901,2025),
+  var_names = "Temperature",
+  boot = "std",
+  dynamic = "moving",
+  win_size = 25,
+  win_offset = 1
+)
+
+## Plot moving correlations
+plot(EWD_Temp_moving)
+
+
 # LATEWOOD DENSITY
 LWD <- XCT.read(
   path = XCT_folder,
@@ -437,11 +580,11 @@ class(LWD) <- c("rwl","data.frame")
 LWDChron <- chron(LWD)
 ## LWD + Prec/Temp
 LWD_Prec <- dcc(LWDChron, PrecSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Precipitation", boot = "std")
+                   timespan = c(1901,2025), var_names = "Precipitation", boot = "std")
 class(LWD_Prec)
 plot(LWD_Prec)
 LWD_Temp <- dcc(LWDChron, TempSites, selection = -6:9, method = "correlation",
-                   timespan = c(1930,1990), var_names = "Temperature", boot = "std")
+                   timespan = c(1901,2025), var_names = "Temperature", boot = "std")
 class(LWD_Temp)
 plot(LWD_Temp)
 ## LWD correlation plot
