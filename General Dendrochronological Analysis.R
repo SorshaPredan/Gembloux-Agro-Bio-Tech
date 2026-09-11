@@ -340,10 +340,10 @@ legend(
 
 
 
-
+# BEECH HEALTHY AND DISEASED #
 
 ### Do diseased trees show lower growth compared to healthy trees? ###
-# Becch Malade/No Malade
+# Beech Malade/No Malade
 HealthyTRW <- read_xlsx("TRWNoMalade.xlsx") 
 HealthyTRW <- as.data.frame(HealthyTRW)
 DiseasedTRW <- read_xlsx("TRWMalade.xlsx")
@@ -392,6 +392,353 @@ legend("topright",
        legend = c("Healthy", "Diseased"),
        col = c("blue", "red"),
        lwd = 2) 
+
+
+
+
+# MOVING CLIMATE CORRELATIONS
+## Healthy vs Diseased trees
+
+# HEALTHY TREES - TEMPERATURE
+Healthy_Temp_moving <- dcc(
+  HealthyBeechChron,
+  TempSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "Temperature",
+  boot = "std",
+  dynamic = "moving"
+)
+
+plot(
+  Healthy_Temp_moving,
+  main = "Healthy trees - Moving correlation with Temperature"
+)
+
+# HEALTHY TREES - PRECIPITATION
+Healthy_Prec_moving <- dcc(
+  HealthyBeechChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "Precipitation",
+  boot = "std",
+  dynamic = "moving"
+)
+
+plot(
+  Healthy_Prec_moving,
+  main = "Healthy trees - Moving correlation with Precipitation"
+)
+
+
+
+# DISEASED TREES - TEMPERATURE
+Diseased_Temp_moving <- dcc(
+  DiseasedBeechChron,
+  TempSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "Temperature",
+  boot = "std",
+  dynamic = "moving"
+)
+
+plot(
+  Diseased_Temp_moving,
+  main = "Diseased trees - Moving correlation with Temperature"
+)
+
+# DISEASED TREES - PRECIPITATION
+Diseased_Prec_moving <- dcc(
+  DiseasedBeechChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901, 2025),
+  var_names = "Precipitation",
+  boot = "std",
+  dynamic = "moving"
+)
+
+plot(
+  Diseased_Prec_moving,
+  main = "Diseased trees - Moving correlation with Precipitation"
+)
+
+
+
+# STATISTICAL COMPARISON
+## Healthy vs Diseased climate response
+
+### Prepare common years
+Healthy_data <- data.frame(
+  year = as.numeric(time(HealthyBeechChron)),
+  Healthy = HealthyBeechChron$std
+)
+Diseased_data <- data.frame(
+  year = as.numeric(time(DiseasedBeechChron)),
+  Diseased = DiseasedBeechChron$std
+)
+Climate_data <- merge(
+  Healthy_data,
+  Diseased_data,
+  by = "year"
+)
+
+## Function to compare Healthy and Diseased correlations
+compare_correlations <- function(
+    Healthy,
+    Diseased,
+    Climate,
+    nboot = 1000
+) {
+  complete <- complete.cases(
+    Healthy,
+    Diseased,
+    Climate
+  )
+  Healthy <- Healthy[complete]
+  Diseased <- Diseased[complete]
+  Climate <- Climate[complete]
+  ### Observed correlations
+  r_healthy <- cor(
+    Healthy,
+    Climate,
+    method = "pearson"
+  )
+  r_diseased <- cor(
+    Diseased,
+    Climate,
+    method = "pearson"
+  )
+  observed_difference <- r_healthy - r_diseased
+  ### Bootstrap
+  n <- length(Healthy)
+  boot_difference <- numeric(nboot)
+  set.seed(123)
+  for (i in 1:nboot) {
+    index <- sample(
+      1:n,
+      size = n,
+      replace = TRUE
+    )
+    r_h <- cor(
+      Healthy[index],
+      Climate[index]
+    )
+    r_d <- cor(
+      Diseased[index],
+      Climate[index]
+    )
+    boot_difference[i] <- r_h - r_d
+  }
+  ### 95% confidence interval
+  CI <- quantile(
+    boot_difference,
+    probs = c(0.025, 0.975),
+    na.rm = TRUE
+  )
+  ### Two-sided p-value
+  p_value <- 2 * min(
+    mean(boot_difference <= 0),
+    mean(boot_difference >= 0)
+  )
+  data.frame(
+    Healthy_r = r_healthy,
+    Diseased_r = r_diseased,
+    Difference = observed_difference,
+    CI_lower = CI[1],
+    CI_upper = CI[2],
+    p_value = p_value
+  )
+}
+
+
+## TEMPERATURE
+Temp_comparison <- data.frame()
+for (month in c(
+  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL",
+  "AUG", "SEP"
+)) {
+  ### Match month names between climate data and chronology
+  if (month %in% names(TempSites)) {
+    temp_month <- TempSites[
+      TempSites$year %in% Climate_data$year,
+      c("year", month)
+    ]
+    temp_month <- merge(
+      Climate_data,
+      temp_month,
+      by = "year"
+    )
+    result <- compare_correlations(
+      temp_month$Healthy,
+      temp_month$Diseased,
+      temp_month[[month]]
+    )
+    result$Climate <- "Temperature"
+    result$Month <- month
+    Temp_comparison <- rbind(
+      Temp_comparison,
+      result
+    )
+  }
+}
+
+## PRECIPITATION
+Prec_comparison <- data.frame()
+for (month in c(
+  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL",
+  "AUG", "SEP"
+)) {
+  if (month %in% names(PrecSites)) {
+    prec_month <- PrecSites[
+      PrecSites$year %in% Climate_data$year,
+      c("year", month)
+    ]
+    prec_month <- merge(
+      Climate_data,
+      prec_month,
+      by = "year"
+    )
+    result <- compare_correlations(
+      prec_month$Healthy,
+      prec_month$Diseased,
+      prec_month[[month]]
+    )
+    result$Climate <- "Precipitation"
+    result$Month <- month
+    Prec_comparison <- rbind(
+      Prec_comparison,
+      result
+    )
+  }
+}
+
+
+## COMBINE RESULTS
+Climate_comparison <- rbind(
+  Temp_comparison,
+  Prec_comparison
+)
+### Reorder columns
+Climate_comparison <- Climate_comparison[
+  c(
+    "Climate",
+    "Month",
+    "Healthy_r",
+    "Diseased_r",
+    "Difference",
+    "CI_lower",
+    "CI_upper",
+    "p_value"
+  )
+]
+
+### Round values
+Climate_comparison$Healthy_r <-
+  round(Climate_comparison$Healthy_r, 3)
+Climate_comparison$Diseased_r <-
+  round(Climate_comparison$Diseased_r, 3)
+Climate_comparison$Difference <-
+  round(Climate_comparison$Difference, 3)
+Climate_comparison$CI_lower <-
+  round(Climate_comparison$CI_lower, 3)
+Climate_comparison$CI_upper <-
+  round(Climate_comparison$CI_upper, 3)
+Climate_comparison$p_value <-
+  round(Climate_comparison$p_value, 3)
+
+
+## Display results
+Climate_comparison
+
+
+# GRAPH: Healthy vs Diseased climate response
+## Difference in correlation coefficients
+
+### Order month
+month_order <- c("Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+Climate_comparison$Month <- factor(
+  Climate_comparison$Month,
+  levels = month_order
+)
+### Order climate factor
+Climate_comparison$Climate <- factor(
+  Climate_comparison$Climate,
+  levels = c("Temperature", "Precipitation")
+)
+
+## Graph
+ggplot(
+  Climate_comparison,
+  aes(
+    x = Month,
+    y = Difference
+  )
+) +
+  # linea dello zero
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "black"
+  ) +
+  # intervalli di confidenza
+  geom_errorbar(
+    aes(
+      ymin = CI_lower,
+      ymax = CI_upper
+    ),
+    width = 0.15,
+    color = "grey30"
+  ) +
+  # differenza
+  geom_point(
+    aes(
+      color = p_value < 0.05
+    ),
+    size = 3
+  ) +
+  # separazione Temperature / Precipitation
+  facet_wrap(
+    ~ Climate,
+    scales = "free_y"
+  ) +
+  # colori
+  scale_color_manual(
+    values = c(
+      "FALSE" = "grey40",
+      "TRUE" = "red"
+    ),
+    labels = c(
+      "FALSE" = "Not significant",
+      "TRUE" = "Significant"
+    ),
+    name = ""
+  ) +
+  labs(
+    title = "Difference in climate-growth response",
+    subtitle = "Healthy − Diseased",
+    x = "Month",
+    y = "Difference in Pearson correlation (r)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    )
+  )
+
+
 
 ### BAI ###
 HealthyBAI <- bai.in(HealthyTRW)
@@ -454,20 +801,74 @@ result <- seascorr(
   secondary = 2,
   ci = 0.05
 )
-### Plot customization
-plot(result) +
-  scale_fill_manual(
-    values = c("grey85", "firebrick")
-  ) +
-  ggtitle("Seasonal climate-growth correlations") +
-  theme_bw() +
-  theme(
-    plot.title = element_text(
-      hjust = 0.5,
-      size = 14,
-      face = "bold"
-    ),
-    legend.position = "bottom",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 12)
+
+
+## GRAPH: Temp
+temp_coef <- result$coef[[1]]$primary$coef
+temp_sig  <- result$coef[[1]]$primary$significant
+temp_months <- c(
+  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"
+)
+### Graph
+bar_temp <- barplot(
+  temp_coef,
+  names.arg = temp_months,
+  col = ifelse(temp_sig, "firebrick", "grey70"),
+  ylim = c(-0.5, 0.5),
+  ylab = "Pearson correlation (r)",
+  xlab = "Season / month",
+  main = "Beech growth – Temperature correlations",
+  las = 2,
+  border = NA
+)
+abline(h = 0, lwd = 1.5)
+text(
+  x = bar_temp[temp_sig],
+  y = temp_coef[temp_sig] +
+    0.04 * sign(temp_coef[temp_sig]),
+  labels = "*",
+  cex = 1.5
+)
+legend(
+  "topright",
+  legend = c("Significant", "Not significant"),
+  fill = c("firebrick", "grey70"),
+  bty = "n"
+)
+
+
+## GRAPH: Prec
+prec_coef <- result$coef[[1]]$secondary$coef
+prec_sig  <- result$coef[[1]]$secondary$significant
+prec_months <- c(
+  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"
+)
+bar_prec <- barplot(
+  prec_coef,
+  names.arg = prec_months,
+  col = ifelse(prec_sig, "steelblue", "grey70"),
+  ylim = c(-0.5, 0.5),
+  ylab = "Pearson correlation (r)",
+  xlab = "Season / month",
+  main = "Beech growth – Precipitation correlations",
+  las = 2,
+  border = NA
+)
+abline(h = 0, lwd = 1.5)
+if (any(prec_sig)) {
+  text(
+    x = bar_prec[prec_sig],
+    y = prec_coef[prec_sig] +
+      0.04 * sign(prec_coef[prec_sig]),
+    labels = "*",
+    cex = 1.5
   )
+}
+legend(
+  "topright",
+  legend = c("Significant", "Not significant"),
+  fill = c("steelblue", "grey70"),
+  bty = "n"
+)
