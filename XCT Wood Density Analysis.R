@@ -634,6 +634,73 @@ text(
   col = "red"
 )
 
+
+
+# LWD + Precipitation: MOVING CORRELATION
+LWD_Prec_moving <- dcc(
+  LWDChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901,2025),
+  var_names = "Precipitation",
+  boot = "std",
+  dynamic = "moving",
+  win_size = 25,
+  win_offset = 1
+)
+
+## Plot
+plot(LWD_Prec_moving)
+
+
+# LWD + Temperature: MOVING CORRELATION
+TempSites_moving <- data.frame(
+  year = as.numeric(TempSites$year),
+  Jan = as.numeric(TempSites$Jan),
+  Feb = as.numeric(TempSites$Feb),
+  Mar = as.numeric(TempSites$Mar),
+  Apr = as.numeric(TempSites$Apr),
+  May = as.numeric(TempSites$May),
+  Jun = as.numeric(TempSites$Jun),
+  Jul = as.numeric(TempSites$Jul),
+  Aug = as.numeric(TempSites$Aug),
+  Sep = as.numeric(TempSites$Sep),
+  Oct = as.numeric(TempSites$Oct),
+  Nov = as.numeric(TempSites$Nov),
+  Dec = as.numeric(TempSites$Dec)
+)
+
+str(TempSites_moving)
+
+sum(complete.cases(TempSites_moving))
+sum(!complete.cases(TempSites_moving))
+
+TempSites_moving <- TempSites_moving[
+  complete.cases(TempSites_moving),
+]
+
+
+# Moving correlation LWD + Temperature
+LWD_Temp_moving <- dcc(
+  LWDChron,
+  TempSites_moving,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901,2025),
+  var_names = "Temperature",
+  boot = "std",
+  dynamic = "moving",
+  win_size = 25,
+  win_offset = 1
+)
+
+## Plot moving correlations
+plot(LWD_Temp_moving)
+
+
+
+
 # MAXIMUM DENSITY
 MXD <- XCT.read(
   path = XCT_folder,
@@ -703,6 +770,71 @@ text(
   cex = 1.5,
   col = "red"
 )
+
+
+
+# MXD + Precipitation: MOVING CORRELATION
+MXD_Prec_moving <- dcc(
+  MXDChron,
+  PrecSites,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1930,1990),
+  var_names = "Precipitation",
+  boot = "std",
+  dynamic = "moving",
+  win_size = 25,
+  win_offset = 1
+)
+
+## Plot moving correlations
+plot(MXD_Prec_moving)
+
+
+# MXD + Temperature: MOVING CORRELATION
+TempSites_moving <- data.frame(
+  year = as.numeric(TempSites$year),
+  Jan = as.numeric(TempSites$Jan),
+  Feb = as.numeric(TempSites$Feb),
+  Mar = as.numeric(TempSites$Mar),
+  Apr = as.numeric(TempSites$Apr),
+  May = as.numeric(TempSites$May),
+  Jun = as.numeric(TempSites$Jun),
+  Jul = as.numeric(TempSites$Jul),
+  Aug = as.numeric(TempSites$Aug),
+  Sep = as.numeric(TempSites$Sep),
+  Oct = as.numeric(TempSites$Oct),
+  Nov = as.numeric(TempSites$Nov),
+  Dec = as.numeric(TempSites$Dec)
+)
+
+str(TempSites_moving)
+
+sum(complete.cases(TempSites_moving))
+sum(!complete.cases(TempSites_moving))
+
+TempSites_moving <- TempSites_moving[
+  complete.cases(TempSites_moving),
+]
+
+
+MXD_Temp_moving <- dcc(
+  MXDChron,
+  TempSites_moving,
+  selection = -6:9,
+  method = "correlation",
+  timespan = c(1901,2025),
+  var_names = "Temperature",
+  boot = "std",
+  dynamic = "moving",
+  win_size = 25,
+  win_offset = 1
+)
+
+## Plot moving correlations
+plot(MXD_Temp_moving)
+
+
 
 # PRECIPITATION AND TEMPERATURE CHRONOLOGIES
 ## Conversion of chronologies into density data frames
