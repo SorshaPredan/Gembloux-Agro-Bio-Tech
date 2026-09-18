@@ -772,6 +772,230 @@ text(
 )
 
 
+# ============================================================
+# MXD - DENSITY OF THE LAST 6 YEARS
+# 2020-2025
+# Four sample groups: FSBO / FSMA / FSME / FSW
+# ============================================================
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# ------------------------------------------------------------
+# 1. Convert MXD data to long format
+# ------------------------------------------------------------
+
+MXD_recent <- MXD %>%
+  as.data.frame() %>%
+  mutate(
+    Year = as.numeric(rownames(.))
+  ) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Tree",
+    values_to = "MXD"
+  ) %>%
+  filter(
+    Year >= 2020,
+    Year <= 2025
+  ) %>%
+  mutate(
+    Group = case_when(
+      grepl("^FSBO", Tree) ~ "FSBO",
+      grepl("^FSMA", Tree) ~ "FSMA",
+      grepl("^FSME", Tree) ~ "FSME",
+      grepl("^FSW", Tree)  ~ "FSW",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(Group))
+
+# ------------------------------------------------------------
+# 2. Plot density for each sample
+# ------------------------------------------------------------
+
+ggplot(
+  MXD_recent,
+  aes(
+    x = Year,
+    y = MXD,
+    group = Tree,
+    colour = Tree
+  )
+) +
+
+  # Lines connecting yearly values
+  geom_line(
+    linewidth = 0.7,
+    na.rm = FALSE
+  ) +
+
+  # Individual observations
+  geom_point(
+    size = 2
+  ) +
+
+  # Separate the four groups
+  facet_wrap(
+    ~ Group,
+    ncol = 2,
+    scales = "free_y"
+  ) +
+
+  scale_x_continuous(
+    breaks = 2020:2025,
+    limits = c(2020, 2025)
+  ) +
+
+  labs(
+    x = "Year",
+    y = "Maximum density (MXD)",
+    colour = "Sample",
+    title = "Maximum density (MXD) during the last six years"
+  ) +
+
+  theme_classic() +
+
+  theme(
+    legend.position = "right",
+    text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 10),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 11),
+    strip.text = element_text(
+      size = 13,
+      face = "bold"
+    )
+  )
+
+# ------------------------------------------------------------
+# 3. Save figure
+# ------------------------------------------------------------
+
+ggsave(
+  "MXD_density_last_6_years_2020_2025.png",
+  width = 12,
+  height = 9,
+  dpi = 300
+)
+
+
+# ============================================================
+# MXD DENSITY - LAST 6 YEARS
+# Distribution of maximum density values
+# 2020-2025
+# Four groups: FSBO / FSMA / FSME / FSW
+# ============================================================
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# ------------------------------------------------------------
+# 1. Convert MXD data to long format
+# ------------------------------------------------------------
+
+MXD_density_recent <- MXD %>%
+  as.data.frame() %>%
+  mutate(
+    Year = as.numeric(rownames(.))
+  ) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Tree",
+    values_to = "MXD"
+  ) %>%
+  filter(
+    Year >= 2020,
+    Year <= 2025
+  ) %>%
+  mutate(
+    Group = case_when(
+      grepl("^FSBO", Tree) ~ "FSBO",
+      grepl("^FSMA", Tree) ~ "FSMA",
+      grepl("^FSME", Tree) ~ "FSME",
+      grepl("^FSW", Tree)  ~ "FSW",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(Group))
+
+# ------------------------------------------------------------
+# 2. Plot MXD density
+# ------------------------------------------------------------
+
+ggplot(
+  MXD_density_recent,
+  aes(
+    x = factor(Year),
+    y = MXD
+  )
+) +
+
+  # Distribution of MXD values
+  geom_boxplot(
+    aes(group = Year),
+    width = 0.55,
+    fill = "grey90",
+    colour = "grey40",
+    outlier.shape = NA
+  ) +
+
+  # Individual samples
+  geom_jitter(
+    aes(colour = Tree),
+    width = 0.12,
+    height = 0,
+    size = 2,
+    alpha = 0.75
+  ) +
+
+  # Separate the four groups
+  facet_wrap(
+    ~ Group,
+    ncol = 2
+  ) +
+
+  scale_colour_discrete(
+    name = "Sample"
+  ) +
+
+  labs(
+    x = "Year",
+    y = "Maximum density (MXD)",
+    title = "Maximum density (MXD) during the last six years"
+  ) +
+
+  theme_classic() +
+
+  theme(
+    legend.position = "right",
+    text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 10),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 11),
+    strip.text = element_text(
+      size = 13,
+      face = "bold"
+    )
+  )
+
+# ------------------------------------------------------------
+# 3. Save figure
+# ------------------------------------------------------------
+
+ggsave(
+  "MXD_density_distribution_2020_2025.png",
+  width = 12,
+  height = 9,
+  dpi = 300
+)
+
+
+
 
 # MXD + Precipitation: MOVING CORRELATION
 MXD_Prec_moving <- dcc(
