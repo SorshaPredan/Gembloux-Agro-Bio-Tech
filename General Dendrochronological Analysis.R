@@ -487,6 +487,483 @@ ggplot() +
 
 
 
+
+# ============================================================
+# BAI RECENT TREND - SMOOTHING SPLINE
+# Period: 1996-2025
+# Healthy vs Diseased
+# ============================================================
+
+# Calculate mean BAI for each group and year
+BAI_recent_mean <- BAI_long %>%
+  filter(Year >= 1996, Year <= 2025) %>%
+  group_by(Year, Group) %>%
+  summarise(
+    mean_BAI = mean(BAI, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# ------------------------------------------------------------
+# Plot
+# ------------------------------------------------------------
+
+ggplot() +
+
+  # Individual BAI series
+  geom_line(
+    data = BAI_long %>%
+      filter(Year >= 1996, Year <= 2025),
+    aes(
+      x = Year,
+      y = BAI,
+      group = Tree,
+      colour = Group
+    ),
+    alpha = 0.15,
+    linewidth = 0.3
+  ) +
+
+  # Mean BAI
+  geom_line(
+    data = BAI_recent_mean,
+    aes(
+      x = Year,
+      y = mean_BAI,
+      colour = Group
+    ),
+    linewidth = 1
+  ) +
+
+  # Smoothing spline
+  geom_smooth(
+    data = BAI_long %>%
+      filter(Year >= 1996, Year <= 2025),
+    aes(
+      x = Year,
+      y = BAI,
+      colour = Group
+    ),
+    method = "gam",
+    formula = y ~ s(x, bs = "cs"),
+    se = TRUE,
+    linewidth = 1.2
+  ) +
+
+  scale_colour_manual(
+    values = c(
+      "Healthy" = "#0000FF",
+      "Diseased" = "#FF0000"
+    )
+  ) +
+
+  scale_x_continuous(
+    limits = c(1996, 2025),
+    breaks = seq(1995, 2025, by = 5)
+  ) +
+
+  labs(
+    x = "Year",
+    y = "Basal Area Increment (BAI)",
+    colour = "Tree condition"
+  ) +
+
+  theme_classic() +
+
+  theme(
+    legend.position = "top",
+    text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11)
+  )
+
+
+
+
+
+
+
+
+
+# ============================================================
+# SEN'S SLOPE ON TREE-LEVEL BAI
+# A + B cores averaged for each tree
+# Period: 1996-2025
+# ============================================================
+
+library(dplyr)
+library(tidyr)
+library(Kendall)
+
+# ------------------------------------------------------------
+# 1. Prepare BAI data
+# ------------------------------------------------------------
+
+Healthy_long <- HealthyBAI %>%
+  mutate(Year = as.numeric(rownames(.))) %>%
+  filter(Year >= 1996, Year <= 2025) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Core",
+    values_to = "BAI"
+  ) %>%
+  mutate(
+    Tree = sub("[AB]$", "", Core),
+    Group = "Healthy"
+  )
+
+Diseased_long <- DiseasedBAI %>%
+  mutate(Year = as.numeric(rownames(.))) %>%
+  filter(Year >= 1996, Year <= 2025) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Core",
+    values_to = "BAI"
+  ) %>%
+  mutate(
+    Tree = sub("[AB]$", "", Core),
+    Group = "Diseased"
+  )
+
+# Combine both groups
+BAI_tree_long <- bind_rows(
+  Healthy_long,
+  Diseased_long
+)
+
+# ------------------------------------------------------------
+# 2. Calculate mean BAI of the two cores for each tree/year
+# ------------------------------------------------------------
+
+BAI_tree_mean <- BAI_tree_long %>%
+  group_by(Year, Tree, Group) %>%
+  summarise(
+    BAI = mean(BAI, na.rm = TRUE),
+    n_cores = sum(!is.na(BAI)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    BAI = ifelse(n_cores == 0, NA, BAI)
+  )
+
+# ------------------------------------------------------------
+# 3. Calculate Sen's slope for each tree
+# ------------------------------------------------------------
+
+Sen_tree_results <- data.frame()
+
+for (tree in unique(BAI_tree_mean$Tree)) {
+  
+  tree_data <- BAI_tree_mean %>%
+    filter(Tree == tree) %>%
+    filter(!is.na(BAI)) %>%
+    arrange(Year)
+  
+  if (nrow(tree_data) >= 5) {
+    
+    sen <- sens.slope(tree_data$BAI)
+    
+    result <- data.frame(
+      Tree = tree,
+      Group = unique(tree_data$Group),
+      Sen_slope = as.numeric(sen$estimates),
+      p_value = as.numeric(sen$p.value)
+    )
+    
+    Sen_tree_results <- rbind(
+      Sen_tree_results,
+      result
+    )
+  }
+}
+
+# ------------------------------------------------------------
+# 4. Classify the trend
+# ------------------------------------------------------------
+
+Sen_tree_results <- Sen_tree_results %>%
+  mutate(
+    Trend = case_when(
+      p_value < 0.05 & Sen_slope < 0 ~ "Decreasing",
+      p_value < 0.05 & Sen_slope > 0 ~ "Increasing",
+      TRUE ~ "No significant trend"
+    )
+  )
+
+# ------------------------------------------------------------
+# 5. Display results
+# ------------------------------------------------------------
+
+Sen_tree_results <- Sen_tree_results %>%
+  arrange(Group, Tree)
+
+Sen_tree_results
+
+# ------------------------------------------------------------
+# 6. Summary by group
+# ------------------------------------------------------------
+
+Sen_tree_summary <- Sen_tree_results %>%
+  group_by(Group) %>%
+  summarise(
+    n_trees = n(),
+    decreasing = sum(Trend == "Decreasing"),
+    increasing = sum(Trend == "Increasing"),
+    no_significant_trend = sum(Trend == "No significant trend"),
+    .groups = "drop"
+  )
+
+Sen_tree_summary
+
+
+
+
+
+
+
+# SEN'S SLOPE OF BAI TREND IN THREE PERIODS
+# Tree-level analysis: A + B cores averaged
+# Periods: 1996-2005, 2006-2015, 2016-2025
+
+Healthy_long <- HealthyBAI %>%
+  mutate(Year = as.numeric(rownames(.))) %>%
+  filter(Year >= 1996, Year <= 2025) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Core",
+    values_to = "BAI"
+  ) %>%
+  mutate(
+    Tree = sub("[AB]$", "", Core),
+    Group = "Healthy"
+  )
+
+Diseased_long <- DiseasedBAI %>%
+  mutate(Year = as.numeric(rownames(.))) %>%
+  filter(Year >= 1996, Year <= 2025) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Core",
+    values_to = "BAI"
+  ) %>%
+  mutate(
+    Tree = sub("[AB]$", "", Core),
+    Group = "Diseased"
+  )
+
+BAI_long <- bind_rows(
+  Healthy_long,
+  Diseased_long
+)
+
+# ------------------------------------------------------------
+# 2. Average A and B cores for each tree and year
+# ------------------------------------------------------------
+
+BAI_tree_mean <- BAI_long %>%
+  group_by(Year, Tree, Group) %>%
+  summarise(
+    BAI = ifelse(
+      all(is.na(BAI)),
+      NA_real_,
+      mean(BAI, na.rm = TRUE)
+    ),
+    .groups = "drop"
+  )
+
+# ------------------------------------------------------------
+# 3. Define the three periods
+# ------------------------------------------------------------
+
+BAI_tree_mean <- BAI_tree_mean %>%
+  mutate(
+    Period = case_when(
+      Year >= 1996 & Year <= 2005 ~ "1996–2005",
+      Year >= 2006 & Year <= 2015 ~ "2006–2015",
+      Year >= 2016 & Year <= 2025 ~ "2016–2025"
+    )
+  )
+
+# ------------------------------------------------------------
+# 4. Calculate Sen's slope for each tree and period
+# ------------------------------------------------------------
+
+Sen_3periods <- data.frame()
+
+for (tree in unique(BAI_tree_mean$Tree)) {
+  
+  for (period in unique(BAI_tree_mean$Period)) {
+    
+    tree_data <- BAI_tree_mean %>%
+      filter(
+        Tree == tree,
+        Period == period,
+        !is.na(BAI)
+      ) %>%
+      arrange(Year)
+    
+    if (nrow(tree_data) >= 5) {
+      
+      sen <- sens.slope(tree_data$BAI)
+      
+      result <- data.frame(
+        Tree = tree,
+        Group = unique(tree_data$Group),
+        Period = period,
+        Sen_slope = as.numeric(sen$estimates),
+        p_value = as.numeric(sen$p.value),
+        n_years = nrow(tree_data)
+      )
+      
+      Sen_3periods <- rbind(
+        Sen_3periods,
+        result
+      )
+    }
+  }
+}
+
+# ------------------------------------------------------------
+# 5. Order periods and classify significance
+# ------------------------------------------------------------
+
+Sen_3periods <- Sen_3periods %>%
+  mutate(
+    Period = factor(
+      Period,
+      levels = c(
+        "1996–2005",
+        "2006–2015",
+        "2016–2025"
+      )
+    ),
+    Significance = ifelse(
+      p_value < 0.05,
+      "Significant",
+      "Not significant"
+    )
+  ) %>%
+  arrange(Group, Period, Tree)
+
+# Check results
+Sen_3periods
+
+# ------------------------------------------------------------
+# 6. Plot
+# ------------------------------------------------------------
+
+ggplot(
+  Sen_3periods,
+  aes(
+    x = Period,
+    y = Sen_slope,
+    fill = Group
+  )
+) +
+
+  # Distribution of Sen's slopes
+  geom_violin(
+    aes(
+      colour = Group
+    ),
+    position = position_dodge(width = 0.8),
+    alpha = 0.25,
+    trim = FALSE,
+    width = 0.75
+  ) +
+
+  # Individual trees
+  geom_jitter(
+    aes(
+      shape = Significance,
+      alpha = Significance,
+      colour = Group
+    ),
+    position = position_jitterdodge(
+      jitter.width = 0.12,
+      dodge.width = 0.8
+    ),
+    size = 2.7
+  ) +
+
+  # Zero reference line
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    colour = "black",
+    linewidth = 0.7
+  ) +
+
+  # Vertical lines separating the three periods
+  geom_vline(
+    xintercept = c(1.5, 2.5),
+    linetype = "solid",
+    colour = "grey70",
+    linewidth = 0.6
+  ) +
+
+  # Colours
+  scale_fill_manual(
+    values = c(
+      "Healthy" = "#0000FF",
+      "Diseased" = "#FF0000"
+    )
+  ) +
+
+  scale_colour_manual(
+    values = c(
+      "Healthy" = "#0000FF",
+      "Diseased" = "#FF0000"
+    )
+  ) +
+
+  # Significance of Sen's slope
+  scale_shape_manual(
+    values = c(
+      "Significant" = 16,
+      "Not significant" = 1
+    )
+  ) +
+
+  scale_alpha_manual(
+    values = c(
+      "Significant" = 1,
+      "Not significant" = 0.45
+    )
+  ) +
+
+  labs(
+    x = "Period",
+    y = "Sen's slope of BAI trend (cm²/year change)",
+    fill = "Tree condition",
+    colour = "Tree condition",
+    shape = "Sen's slope",
+    alpha = "Sen's slope"
+  ) +
+
+  theme_classic() +
+
+  theme(
+    legend.position = "top",
+    text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11),
+    panel.grid.major.y = element_line(
+      colour = "grey85",
+      linewidth = 0.4
+    ),
+    panel.grid.minor.y = element_line(
+      colour = "grey93",
+      linewidth = 0.3
+    )
+  )
+
+
+
+
+
+
+
+
 # MOVING CLIMATE CORRELATIONS
 ## Healthy vs Diseased trees
 
