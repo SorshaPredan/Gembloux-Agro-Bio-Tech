@@ -395,6 +395,97 @@ legend("topright",
 
 
 
+# BAI - SMOOTHING SPLINE: HEALTHY vs DISEASED #
+# Period: 1901-2025
+HealthyBAI <- bai.in(HealthyTRW)
+DiseasedBAI <- bai.in(DiseasedTRW)
+
+
+### Convert BAI data frames to long format
+Healthy_long <- HealthyBAI %>%
+  as.data.frame() %>%
+  mutate(Year = as.numeric(rownames(.))) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Tree",
+    values_to = "BAI"
+  ) %>%
+  mutate(Group = "Healthy")
+Diseased_long <- DiseasedBAI %>%
+  as.data.frame() %>%
+  mutate(Year = as.numeric(rownames(.))) %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Tree",
+    values_to = "BAI"
+  ) %>%
+  mutate(Group = "Diseased")
+### Combine the two groups
+BAI_long <- bind_rows(Healthy_long, Diseased_long)
+### Keep only the period 1901-2025
+BAI_long <- BAI_long %>%
+  filter(Year >= 1901, Year <= 2025)
+### Remove missing values
+BAI_long <- BAI_long %>%
+  filter(!is.na(BAI))
+
+## Calculate mean BAI for each group and year
+BAI_mean <- BAI_long %>%
+  group_by(Year, Group) %>%
+  summarise(
+    mean_BAI = mean(BAI, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+## Plot
+ggplot() +
+  ### Individual BAI series
+  geom_line(
+    data = BAI_long,
+    aes(x = Year, y = BAI, group = Tree, colour = Group),
+    alpha = 0.15,
+    linewidth = 0.3
+  ) +
+  ### Mean BAI
+  geom_line(
+    data = BAI_mean,
+    aes(x = Year, y = mean_BAI, colour = Group),
+    linewidth = 1
+  ) +
+  ### Smoothing spline
+  geom_smooth(
+    data = BAI_long,
+    aes(x = Year, y = BAI, colour = Group),
+    method = "gam",
+    formula = y ~ s(x, bs = "cs"),
+    se = TRUE,
+    linewidth = 1.2
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Healthy" = "#0000FF",
+      "Diseased" = "#FF0000"
+    )
+  ) +
+  scale_x_continuous(
+    limits = c(1901, 2025),
+    breaks = seq(1900, 2025, by = 20)
+  ) +
+  labs(
+    x = "Year",
+    y = "Basal Area Increment (BAI)",
+    colour = "Tree condition"
+  ) +
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11)
+  )
+
+
+
 
 # MOVING CLIMATE CORRELATIONS
 ## Healthy vs Diseased trees
