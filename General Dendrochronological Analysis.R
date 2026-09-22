@@ -396,7 +396,7 @@ legend("topright",
 
 
 # BAI - SMOOTHING SPLINE: HEALTHY vs DISEASED #
-# Period: 1901-2025
+# Period: 1800-2025
 HealthyBAI <- bai.in(HealthyTRW)
 DiseasedBAI <- bai.in(DiseasedTRW)
 
@@ -422,9 +422,9 @@ Diseased_long <- DiseasedBAI %>%
   mutate(Group = "Diseased")
 ### Combine the two groups
 BAI_long <- bind_rows(Healthy_long, Diseased_long)
-### Keep only the period 1901-2025
+### Keep only the period 1800-2025
 BAI_long <- BAI_long %>%
-  filter(Year >= 1901, Year <= 2025)
+  filter(Year >= 1800, Year <= 2025)
 ### Remove missing values
 BAI_long <- BAI_long %>%
   filter(!is.na(BAI))
@@ -468,8 +468,8 @@ ggplot() +
     )
   ) +
   scale_x_continuous(
-    limits = c(1901, 2025),
-    breaks = seq(1900, 2025, by = 20)
+    limits = c(1800, 2025),
+    breaks = seq(1800, 2025, by = 20)
   ) +
   labs(
     x = "Year",
@@ -592,7 +592,7 @@ ggplot() +
 
 library(dplyr)
 library(tidyr)
-library(Kendall)
+library(trend)
 
 # ------------------------------------------------------------
 # 1. Prepare BAI data
@@ -931,14 +931,15 @@ ggplot(
     )
   ) +
 
-  labs(
-    x = "Period",
-    y = "Sen's slope of BAI trend (cm²/year change)",
-    fill = "Tree condition",
-    colour = "Tree condition",
-    shape = "Sen's slope",
-    alpha = "Sen's slope"
-  ) +
+ labs(
+x = "Period",
+y = "Sen's slope of BAI trend (cm²/year change)",
+fill = "Tree condition",
+colour = "Tree condition",
+shape = "Sen's slope",
+alpha = "Sen's slope",
+subtitle = "Analysis period: 1996–2025 (30 years)"
+) +
 
   theme_classic() +
 
